@@ -57,6 +57,12 @@ struct i2c_transaction ppzuavimu_adxl345;
 struct Imu imu;
 #endif
 
+/* ADDED for moving average filter(s) */
+#ifdef IMU_ACCEL_MA_FILTER_WINDOW
+struct Imu_MA_Filter_Vect3 accel_filt;
+#endif
+/* ADDED end */
+
 #ifndef PERIODIC_FREQUENCY
 #define PERIODIC_FREQUENCY 60
 #endif
@@ -165,6 +171,22 @@ void imu_impl_init(void)
   i2c_submit(&PPZUAVIMU_I2C_DEVICE,&ppzuavimu_hmc5843);
     while(ppzuavimu_hmc5843.status == I2CTransPending);
 
+/* ADDED for moving average filter(s) */
+# ifdef IMU_ACCEL_MA_FILTER_WINDOW
+  //initialize struct
+  accel_filt.cnt = 0;
+  accel_filt.sumX = 0;
+  accel_filt.sumY = 0;
+  accel_filt.sumZ = 0;
+  for (int i = 0; i < IMU_ACCEL_MA_FILTER_WINDOW; i++)
+  {
+    accel_filt.bufferX[i] = 0;
+    accel_filt.bufferY[i] = 0;
+    accel_filt.bufferZ[i] = 0;
+  }
+# endif
+/* ADDED end */
+
 }
 
 void imu_periodic( void )
@@ -245,11 +267,31 @@ void ppzuavimu_module_event( void )
     y = (int16_t) ((ppzuavimu_adxl345.buf[3] << 8) | ppzuavimu_adxl345.buf[2]);
     z = (int16_t) ((ppzuavimu_adxl345.buf[5] << 8) | ppzuavimu_adxl345.buf[4]);
 
+    //Sign the values correctly according to sensor layout on hardware
 #ifdef ASPIRIN_IMU
-    VECT3_ASSIGN(imu.accel_unscaled, x, -y, -z);
+    //VECT3_ASSIGN(imu.accel_unscaled, x, -y, -z);
+    //x = x;
+    y = -y;
+    z = -z;
 #else // PPZIMU
-    VECT3_ASSIGN(imu.accel_unscaled, -x, y, -z);
+    //VECT3_ASSIGN(imu.accel_unscaled, -x, y, -z);
+    x = -x;
+    //y = y;
+    z = -z;
 #endif
+
+/* ADDED for moving average filter(s) */
+#ifdef IMU_ACCEL_MA_FILTER_WINDOW
+    //update the filter
+    ppzuavimu_module_update_ma_filter(&accel_filt, x, y, z);
+    //assign filtered values
+    VECT3_ASSIGN(imu.accel_unscaled, accel_filt.sumX/IMU_ACCEL_MA_FILTER_WINDOW,
+                                     accel_filt.sumY/IMU_ACCEL_MA_FILTER_WINDOW,
+                                     accel_filt.sumZ/IMU_ACCEL_MA_FILTER_WINDOW);
+#else //no moving average filter
+    VECT3_ASSIGN(imu.accel_unscaled, x, y, z); //signs corrected above
+#endif
+/* ADDED end */
 
     acc_valid = TRUE;
     ppzuavimu_adxl345.status = I2CTransDone;
@@ -272,3 +314,26 @@ void ppzuavimu_module_event( void )
     ppzuavimu_hmc5843.status = I2CTransDone;
   }
 }
+
+/* ADDED for moving average filter(s) */
+# ifdef IMU_ACCEL_MA_FILTER_WINDOW
+void ppzuavimu_module_update_ma_filter(struct Imu_MA_Filter_Vect3 *filter, int16_t new_x, int16_t new_y, int16_t new_z)
+{
+  //update buffer with newest values
+  filter->bufferX[filter->cnt] = new_x;
+  filter->bufferY[filter->cnt] = new_y;
+  filter->bufferZ[filter->cnt] = new_z;
+
+  //calculate the mod once (next buffer position, i.e. the oldest value in the buffer)
+  int16_t next_buf_position = (filter->cnt + 1) % IMU_ACCEL_MA_FILTER_WINDOW;
+
+  //update sum, new sum is old sum plus newest buffer value minus oldest buffer value in window
+  filter->sumX = filter->bufferX[filter->cnt] + filter->sumX - filter->bufferX[next_buf_position];
+  filter->sumY = filter->bufferY[filter->cnt] + filter->sumY - filter->bufferY[next_buf_position];
+  filter->sumZ = filter->bufferZ[filter->cnt] + filter->sumZ - filter->bufferZ[next_buf_position];
+
+  //increment buffer pointer position
+  filter->cnt = next_buf_position;
+}
+# endif
+/* ADDED end */

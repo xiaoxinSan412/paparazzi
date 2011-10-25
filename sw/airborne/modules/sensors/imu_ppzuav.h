@@ -33,6 +33,20 @@ extern void imu_impl_init(void);
 extern void imu_periodic(void);
 */
 
+/* ADDED for moving average filter(s) */
+#ifdef IMU_ACCEL_MA_FILTER_WINDOW
+struct Imu_MA_Filter_Vect3 {
+  int16_t cnt;
+  int32_t sumX;
+  int32_t sumY;
+  int32_t sumZ;
+  int32_t bufferX[IMU_ACCEL_MA_FILTER_WINDOW];
+  int32_t bufferY[IMU_ACCEL_MA_FILTER_WINDOW];
+  int32_t bufferZ[IMU_ACCEL_MA_FILTER_WINDOW];
+};
+#endif
+/* ADDED end */
+
 #define ImuEvent(_gyro_handler, _accel_handler, _mag_handler) {   \
     ppzuavimu_module_event();                \
     if (gyr_valid) {                         \
@@ -52,6 +66,11 @@ extern void imu_periodic(void);
 /* Own Extra Functions */
 extern void ppzuavimu_module_event( void );
 extern void ppzuavimu_module_downlink_raw( void );
+/* ADDED for moving average filter(s) */
+#ifdef IMU_ACCEL_MA_FILTER_WINDOW
+extern void ppzuavimu_module_update_ma_filter(struct Imu_MA_Filter_Vect3 *filter, int16_t new_x, int16_t new_y, int16_t new_z);
+#endif
+/* ADDED end */
 
 
 #endif // PPZUAVIMU_H
