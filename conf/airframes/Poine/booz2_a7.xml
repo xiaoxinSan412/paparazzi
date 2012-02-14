@@ -74,9 +74,7 @@
  </section>
 
  <section name="BAT">
-   <define name="MILLIAMP_PER_PERCENT" value="0.86"/>
    <define name="CATASTROPHIC_BAT_LEVEL" value="9.3" unit="V"/>
-   <define name="BATTERY_SENS"   value="0.48" integer="16"/>
  </section>
 
 
@@ -164,7 +162,6 @@
 
   <section name="INS" prefix="INS_">
     <define name="BARO_SENS" value="10." integer="16"/>
-    <define name="UNTILT_ACCEL" value="1"/>
   </section>
 
  <section name="GUIDANCE_V" prefix="GUIDANCE_V_">
@@ -265,10 +262,10 @@
 
   <firmware name="lisa_passthrough">
     <target name="overo_test_passthrough" board="lisa_l_1.0"  >
-      <param name="HOST"          value="A7"/>
-      <param name="USER"          value=""/>
-      <param name="TARGET_DIR"    value="~"/>
-      <param name="PERIODIC_FREQ" value="512"/>
+      <configure name="HOST"          value="A7"/>
+      <configure name="USER"          value=""/>
+      <configure name="TARGET_DIR"    value="~"/>
+      <configure name="PERIODIC_FREQ" value="512"/>
     </target>
     <target name="stm_passthrough" board="lisa_l_1.0">
       <subsystem name="radio_control" type="spektrum"/>

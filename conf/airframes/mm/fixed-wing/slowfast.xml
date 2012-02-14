@@ -27,7 +27,7 @@
     <subsystem name="navigation"/>
 
     <subsystem name="gyro" type="roll">
-      <param name="ADC_GYRO_ROLL" value="ADC_3"/>
+      <configure name="ADC_GYRO_ROLL" value="ADC_3"/>
     </subsystem>
   </firmware>
 
@@ -215,11 +215,6 @@
     <define name="ROLL_RATE_PGAIN" value="1000.0"/>
     <define name="ROLL_RATE_IGAIN" value="0.0"/>
     <define name="ROLL_RATE_DGAIN" value="0.0"/>
-  </section>
-
- <section name="DATALINK" prefix="DATALINK_">
-    <define name="DEVICE_TYPE" value="XBEE"/>
-    <define name="DEVICE_ADDRESS" value="...."/>
   </section>
 
 

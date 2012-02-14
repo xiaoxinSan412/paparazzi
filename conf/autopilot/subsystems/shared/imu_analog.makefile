@@ -5,12 +5,12 @@
 #
 #
 # <subsystem name="imu" type="analog">
-#   <param name="GYRO_P" value="ADC_0"/>
-#   <param name="GYRO_Q" value="ADC_1"/>
-#   <param name="GYRO_R" value="ADC_2"/>
-#   <param name="ACCEL_X" value="ADC_5"/>
-#   <param name="ACCEL_Y" value="ADC_6"/>
-#   <param name="ACCEL_Z" value="ADC_7"/>
+#   <configure name="GYRO_P" value="ADC_0"/>
+#   <configure name="GYRO_Q" value="ADC_1"/>
+#   <configure name="GYRO_R" value="ADC_2"/>
+#   <configure name="ACCEL_X" value="ADC_5"/>
+#   <configure name="ACCEL_Y" value="ADC_6"/>
+#   <configure name="ACCEL_Z" value="ADC_7"/>
 # </subsystem>
 #
 # required xml:
@@ -57,6 +57,10 @@ imu_CFLAGS += -DADC_CHANNEL_ACCEL_X=$(ACCEL_X) -DADC_CHANNEL_ACCEL_Y=$(ACCEL_Y) 
 
 imu_srcs += $(SRC_SUBSYSTEMS)/imu.c
 imu_srcs += $(SRC_SUBSYSTEMS)/imu/imu_analog.c
+
+else ifeq ($(ARCH), stm32)
+
+$(error Not implemented for the stm32 yet... should be trivial, just do it...)
 
 endif
 

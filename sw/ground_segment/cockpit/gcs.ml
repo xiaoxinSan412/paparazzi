@@ -347,7 +347,7 @@ let options =
    "-center_ac", Arg.Set auto_center_new_ac, "Centers the map on any new A/C";
    "-edit", Arg.Unit (fun () -> edit := true; layout_file := "editor.xml"), "Flight plan editor";
    "-fullscreen", Arg.Set fullscreen, "Fullscreen window";
-   "-google_fill", Arg.Set GM.auto, "Google maps auto fill";
+   "-maps_fill", Arg.Set GM.auto, "Automatically start loading background maps";
    "-ign", Arg.String (fun s -> ign:=true; IGN.data_path := s), "IGN tiles path";
    "-lambertIIe", Arg.Unit (fun () -> projection:=G.LambertIIe),"Switch to LambertIIe projection";
    "-layout", Arg.Set_string layout_file, (sprintf "<XML layout specification> GUI layout. Default: %s" !layout_file);
@@ -356,11 +356,12 @@ let options =
    "-mercator", Arg.Unit (fun () -> projection:=G.Mercator),"Switch to (Google Maps) Mercator projection, default";
    "-mplayer", Arg.Set_string mplayer, "Launch mplayer with the given argument as X plugin";
    "-no_alarm", Arg.Set no_alarm, "Disables alarm page";
-   "-no_google_http", Arg.Unit (fun () -> Gm.set_policy Gm.NoHttp), "Switch off Google Maps downloading";
+   "-maps_no_http", Arg.Unit (fun () -> Gm.set_policy Gm.NoHttp), "Switch off downloading of maps, always use cached maps";
    "-ortho", Arg.Set_string get_bdortho, "IGN tiles path";
    "-osm", Arg.Unit (fun () -> Gm.set_maps_source Gm.OSM), "Use OpenStreetMap database (default is Google)";
+   "-ms", Arg.Unit (fun () -> Gm.set_maps_source Gm.MS), "Use Microsoft maps database (default is Google)";
    "-particules", Arg.Set display_particules, "Display particules";
-    "-plugin", Arg.Set_string  plugin_window, "External X application (launched with the id of the plugin window as argument)";
+   "-plugin", Arg.Set_string  plugin_window, "External X application (launched with the id of the plugin window as argument)";
    "-ref", Arg.Set_string geo_ref, "Geographic ref (e.g. 'WGS84 43.605 1.443')";
    "-speech", Arg.Set Speech.active, "Enable vocal messages";
    "-srtm", Arg.Set srtm, "Enable SRTM elevation display";
@@ -404,10 +405,13 @@ let create_geomap = fun switch_fullscreen editor_frame ->
   let maps_source_menu = map_menu_fact#add_submenu "Maps Source" in
   let maps_source_fact = new GMenu.factory maps_source_menu in
   let group = ref None in
+  (* Determine a decent default selected item *)
+  let active_maps_source = Gm.get_maps_source () in
   List.iter
     (fun maps_source ->
       let callback = fun b -> if b then Gm.set_maps_source maps_source in
-      let menu_item = maps_source_fact#add_radio_item ~group: !group ~callback (Gm.string_of_maps_source maps_source) in
+      let active = (maps_source = active_maps_source) in
+      let menu_item = maps_source_fact#add_radio_item ~group: !group ~active ~callback (Gm.string_of_maps_source maps_source) in
       group := menu_item#group)
     Gm.maps_sources;
 

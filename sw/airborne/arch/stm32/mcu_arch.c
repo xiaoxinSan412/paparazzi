@@ -32,7 +32,11 @@
 #include <stm32/flash.h>
 #include <stm32/misc.h>
 #ifdef USE_OPENCM3
-#include <libopencm3/stm32/rcc.h>
+#	if defined(STM32F1) || defined(STM32F2) || defined(STM32F4)
+#		include <libopencm3/stm32/f1/rcc.h>
+#	else
+#		include <libopencm3/stm32/rcc.h>
+#	endif
 #endif
 
 
@@ -43,7 +47,7 @@ void mcu_arch_init(void) {
   return;
 #endif
 #ifdef HSE_TYPE_EXT_CLK
-#warning Info: Using external clock
+#pragma message "Using external clock."
   /* Setup the microcontroller system.
    *  Initialize the Embedded Flash Interface,
    *  initialize the PLL and update the SystemFrequency variable.
@@ -81,7 +85,7 @@ void mcu_arch_init(void) {
     while(RCC_GetSYSCLKSource() != 0x08) {}
   }
 #else  /* HSE_TYPE_EXT_CLK */
-#warning Using normal system clock setup
+#pragma message "Using normal system clock setup."
   SystemInit();
 #endif /* HSE_TYPE_EXT_CLK */
    /* Set the Vector Table base location at 0x08000000 */
