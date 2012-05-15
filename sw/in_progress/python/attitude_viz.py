@@ -219,7 +219,7 @@ class Visualization:
     glTranslate(0, -height + (height / len(self.quats) + 1),  0)
     for telemetry_quat in self.quats:
       glPushMatrix()
-      try: 
+      try:
         scaled_quat = [telemetry_quat.qi * telemetry_quat.scale, telemetry_quat.qx * telemetry_quat.scale, telemetry_quat.qy * telemetry_quat.scale, telemetry_quat.qz * telemetry_quat.scale]
         glRotate(360 * math.acos(scaled_quat[0] ) / math.pi, scaled_quat[2], -scaled_quat[3], -scaled_quat[1])
         glRotate(-90, 1, 0, 0)
@@ -237,11 +237,11 @@ class Visualizer:
 
     # listen to Ivy
     logging.getLogger('Ivy').setLevel(logging.WARN)
-    IvyInit(_NAME, 
-      "", 
-      0, 
-      lambda x,y: y, 
-      lambda x,z: z 
+    IvyInit(_NAME,
+      "",
+      0,
+      lambda x,y: y,
+      lambda x,z: z
     )
 
     IvyStart("")
@@ -256,7 +256,7 @@ class Visualizer:
       messages.append(bar_value[0])
     
     # bind to set of messages (ie, only bind each message once)
-    for message_name in set(messages): 
+    for message_name in set(messages):
       bind_string = "(^.*" + message_name + ".*$)"
       IvyBindMsg(self.visualization.onmsgproc, bind_string)
 
@@ -330,19 +330,18 @@ def run():
   #resize(*SCREEN_SIZE)
   init()
   visualizer = Visualizer()
-
   try:
-    while True:
-      for event in pygame.event.get():
-        if event.type == pygame.QUIT:
-          visualizer.OnClose()
-          return
-        if event.type == pygame.KEYUP and event.key == pygame.K_ESCAPE:
-          visualizer.OnClose()
-          return
-      visualizer.Draw()
-      pygame.display.flip()
-      time.sleep(.02)
+  while True:
+    for event in pygame.event.get():
+      if event.type == pygame.QUIT:
+        visualizer.OnClose()
+        return
+      if event.type == pygame.KEYUP and event.key == pygame.K_ESCAPE:
+        visualizer.OnClose()
+        return
+    visualizer.Draw()
+    pygame.display.flip()
+    time.sleep(.02)
   except KeyboardInterrupt:
     visualizer.OnClose()
     return

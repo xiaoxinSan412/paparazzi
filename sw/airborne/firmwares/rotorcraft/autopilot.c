@@ -33,10 +33,8 @@
   #include "subsystems/electrical.h"
   #include "firmwares/rotorcraft/toytronics/toytronics_setpoint.h"
 #endif
-
 uint8_t  autopilot_mode;
 uint8_t  autopilot_mode_auto2;
-
 int32_t  autopilot_lobatt_wing_waggle_interval; //interval at which wing waggle series occurs if batt is low
 
 bool_t   autopilot_in_flight;
@@ -85,15 +83,15 @@ void autopilot_init(void) {
   autopilot_flight_time = 0;
   autopilot_rc = TRUE;
   autopilot_power_switch = FALSE;
-  #ifdef POWER_SWITCH_LED
-	LED_ON(POWER_SWITCH_LED); // POWER OFF
+#ifdef POWER_SWITCH_LED
+  LED_ON(POWER_SWITCH_LED); // POWER OFF
   #endif
   #ifdef USE_CAMERA_MOUNT
 	camera_mount_init();
   #endif
   #ifdef AUTOPILOT_LOBATT_WING_WAGGLE
 	autopilot_lobatt_wing_waggle_interval = AUTOPILOT_LOBATT_WING_WAGGLE_INTERVAL;
-  #endif
+#endif
   autopilot_arming_init();
 }
 
@@ -103,24 +101,27 @@ void autopilot_periodic(void) {
   RunOnceEvery(NAV_PRESCALER, nav_periodic_task());
 #ifdef FAILSAFE_GROUND_DETECT
   if (autopilot_mode == AP_MODE_FAILSAFE && autopilot_detect_ground) {
-	autopilot_set_mode(AP_MODE_KILL);
-	autopilot_detect_ground = FALSE;
+    autopilot_set_mode(AP_MODE_KILL);
+    autopilot_detect_ground = FALSE;
   }
 #endif
-  if ( !autopilot_motors_on ||
+  /* set failsafe commands, if in FAILSAFE or KILL mode */
 #ifndef FAILSAFE_GROUND_DETECT
-	   autopilot_mode == AP_MODE_FAILSAFE ||
+  if (autopilot_mode == AP_MODE_KILL ||
+      autopilot_mode == AP_MODE_FAILSAFE) {
+#else
+  if (autopilot_mode == AP_MODE_KILL) {
 #endif
-	   autopilot_mode == AP_MODE_KILL ) {
-	SetCommands(commands_failsafe,
+    SetCommands(commands_failsafe,
 		autopilot_in_flight, autopilot_motors_on);
   }
   else {
-	guidance_v_run( autopilot_in_flight );
-	guidance_h_run( autopilot_in_flight );
-	SetCommands(stabilization_cmd,
-		autopilot_in_flight, autopilot_motors_on);
+    guidance_v_run( autopilot_in_flight );
+    guidance_h_run( autopilot_in_flight );
+    SetCommands(stabilization_cmd,
+        autopilot_in_flight, autopilot_motors_on);
   }
+
 #ifdef AUTOPILOT_LOBATT_WING_WAGGLE
   if (electrical.vsupply < (MIN_BAT_LEVEL * 10)){
 	RunOnceEvery(autopilot_lobatt_wing_waggle_interval,{setpoint_lobatt_wing_waggle_num=0;})
@@ -139,14 +140,14 @@ void autopilot_set_mode(uint8_t new_autopilot_mode) {
     new_autopilot_mode = AP_MODE_KILL;
 
   if (new_autopilot_mode != autopilot_mode) {
-	/* horizontal mode */
-	switch (new_autopilot_mode) {
-	case AP_MODE_FAILSAFE:
+    /* horizontal mode */
+    switch (new_autopilot_mode) {
+    case AP_MODE_FAILSAFE:
 #ifndef KILL_AS_FAILSAFE
-	  stab_att_sp_euler.phi = 0;
-	  stab_att_sp_euler.theta = 0;
-	  guidance_h_mode_changed(GUIDANCE_H_MODE_ATTITUDE);
-	  break;
+      stab_att_sp_euler.phi = 0;
+      stab_att_sp_euler.theta = 0;
+      guidance_h_mode_changed(GUIDANCE_H_MODE_ATTITUDE);
+      break;
 #endif
     case AP_MODE_KILL:
       autopilot_set_motors_on(FALSE);
@@ -185,7 +186,7 @@ void autopilot_set_mode(uint8_t new_autopilot_mode) {
 	  break;
 	case AP_MODE_TOYTRONICS_AEROBATIC:
 	  guidance_h_mode_changed(GUIDANCE_H_MODE_TOYTRONICS_AEROBATIC);
-	  break;
+      break;
     default:
       break;
     }
@@ -193,43 +194,43 @@ void autopilot_set_mode(uint8_t new_autopilot_mode) {
     switch (new_autopilot_mode) {
     case AP_MODE_FAILSAFE:
 #ifndef KILL_AS_FAILSAFE
-	  guidance_v_zd_sp = SPEED_BFP_OF_REAL(0.5);
-	  guidance_v_mode_changed(GUIDANCE_V_MODE_CLIMB);
-	  break;
+      guidance_v_zd_sp = SPEED_BFP_OF_REAL(0.5);
+      guidance_v_mode_changed(GUIDANCE_V_MODE_CLIMB);
+      break;
 #endif
-	case AP_MODE_KILL:
-	  guidance_v_mode_changed(GUIDANCE_V_MODE_KILL);
-	  break;
-	case AP_MODE_RC_DIRECT:
-	case AP_MODE_RATE_DIRECT:
-	case AP_MODE_ATTITUDE_DIRECT:
-	case AP_MODE_HOVER_DIRECT:
+    case AP_MODE_KILL:
+      guidance_v_mode_changed(GUIDANCE_V_MODE_KILL);
+      break;
+    case AP_MODE_RC_DIRECT:
+    case AP_MODE_RATE_DIRECT:
+    case AP_MODE_ATTITUDE_DIRECT:
+    case AP_MODE_HOVER_DIRECT:
 	case AP_MODE_TOYTRONICS_HOVER:
 	case AP_MODE_TOYTRONICS_HOVER_FORWARD:
 	case AP_MODE_TOYTRONICS_FORWARD:
 	case AP_MODE_TOYTRONICS_AEROBATIC:
-	  guidance_v_mode_changed(GUIDANCE_V_MODE_RC_DIRECT);
-	  break;
-	case AP_MODE_RATE_RC_CLIMB:
-	case AP_MODE_ATTITUDE_RC_CLIMB:
-	  guidance_v_mode_changed(GUIDANCE_V_MODE_RC_CLIMB);
-	  break;
-	case AP_MODE_ATTITUDE_CLIMB:
-	case AP_MODE_HOVER_CLIMB:
-	  guidance_v_mode_changed(GUIDANCE_V_MODE_CLIMB);
-	  break;
-	case AP_MODE_RATE_Z_HOLD:
-	case AP_MODE_ATTITUDE_Z_HOLD:
-	case AP_MODE_HOVER_Z_HOLD:
-	  guidance_v_mode_changed(GUIDANCE_V_MODE_HOVER);
-	  break;
-	case AP_MODE_NAV:
-	  guidance_v_mode_changed(GUIDANCE_V_MODE_NAV);
-	  break;
-	default:
-	  break;
-	}
-	autopilot_mode = new_autopilot_mode;
+      guidance_v_mode_changed(GUIDANCE_V_MODE_RC_DIRECT);
+      break;
+    case AP_MODE_RATE_RC_CLIMB:
+    case AP_MODE_ATTITUDE_RC_CLIMB:
+      guidance_v_mode_changed(GUIDANCE_V_MODE_RC_CLIMB);
+      break;
+    case AP_MODE_ATTITUDE_CLIMB:
+    case AP_MODE_HOVER_CLIMB:
+      guidance_v_mode_changed(GUIDANCE_V_MODE_CLIMB);
+      break;
+    case AP_MODE_RATE_Z_HOLD:
+    case AP_MODE_ATTITUDE_Z_HOLD:
+    case AP_MODE_HOVER_Z_HOLD:
+      guidance_v_mode_changed(GUIDANCE_V_MODE_HOVER);
+      break;
+    case AP_MODE_NAV:
+      guidance_v_mode_changed(GUIDANCE_V_MODE_NAV);
+      break;
+    default:
+      break;
+    }
+    autopilot_mode = new_autopilot_mode;
   }
 
 }
@@ -237,30 +238,30 @@ void autopilot_set_mode(uint8_t new_autopilot_mode) {
 
 static inline void autopilot_check_in_flight( bool_t motors_on ) {
   if (autopilot_in_flight) {
-	if (autopilot_in_flight_counter > 0) {
-	  if (THROTTLE_STICK_DOWN()) {
-		autopilot_in_flight_counter--;
-		if (autopilot_in_flight_counter == 0) {
-		  autopilot_in_flight = FALSE;
-		}
-	  }
-	  else {	/* !THROTTLE_STICK_DOWN */
-		autopilot_in_flight_counter = AUTOPILOT_IN_FLIGHT_TIME;
-	  }
-	}
+    if (autopilot_in_flight_counter > 0) {
+      if (THROTTLE_STICK_DOWN()) {
+        autopilot_in_flight_counter--;
+        if (autopilot_in_flight_counter == 0) {
+          autopilot_in_flight = FALSE;
+        }
+      }
+      else {	/* !THROTTLE_STICK_DOWN */
+        autopilot_in_flight_counter = AUTOPILOT_IN_FLIGHT_TIME;
+      }
+    }
   }
   else { /* not in flight */
-	if (autopilot_in_flight_counter < AUTOPILOT_IN_FLIGHT_TIME &&
-		motors_on) {
-	  if (!THROTTLE_STICK_DOWN()) {
-		autopilot_in_flight_counter++;
-		if (autopilot_in_flight_counter == AUTOPILOT_IN_FLIGHT_TIME)
-		  autopilot_in_flight = TRUE;
-	  }
-	  else { /*  THROTTLE_STICK_DOWN */
-		autopilot_in_flight_counter = 0;
-	  }
-	}
+    if (autopilot_in_flight_counter < AUTOPILOT_IN_FLIGHT_TIME &&
+        motors_on) {
+      if (!THROTTLE_STICK_DOWN()) {
+        autopilot_in_flight_counter++;
+        if (autopilot_in_flight_counter == AUTOPILOT_IN_FLIGHT_TIME)
+          autopilot_in_flight = TRUE;
+      }
+      else { /*  THROTTLE_STICK_DOWN */
+        autopilot_in_flight_counter = 0;
+      }
+    }
   }
 }
 
