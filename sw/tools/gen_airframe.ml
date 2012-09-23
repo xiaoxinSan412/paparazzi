@@ -182,6 +182,18 @@ let parse_command_laws = fun command ->
        parse_element "" command
    | _ -> xml_error "set|let"
 
+let parse_lift_devices = fun vvv ->
+  let a = fun s -> ExtXml.attrib vvv s in
+   match Xml.tag vvv with
+     "lift_device" ->
+       let ld_type = a "type"
+       and ld_orientation = a "orientation"
+       and ld_offset = a "offset"
+       and ld_sensitivity = a "sensitivity" in
+     printf "  { %s_LIFTING_DEVICE, 0, %s, COMMANDS_FAILSAFE, %s, %s }, \\\n" ld_type ld_orientation ld_offset ld_sensitivity;
+      | _ -> xml_error "lift_device"
+
+
 let parse_csc_fields = fun csc_fields ->
   let a = fun s -> ExtXml.attrib csc_fields s in
    match Xml.tag csc_fields with
@@ -294,6 +306,14 @@ let rec parse_section = fun s ->
 
       printf "#define AllActuatorsInit() { \\\n";
       List.iter (fun d -> printf "  Actuators%sInit();\\\n" d) drivers;
+      printf "}\n\n";
+  | "lift_devices" ->
+    printf "// Set lift device parameters\n";
+    define "LIFT_DEVICES_NB" (string_of_int (List.length (Xml.children s)));
+      printf "#define LIFT_DEVICES { \\\n";
+
+      List.iter parse_lift_devices (Xml.children s);
+
       printf "}\n\n";
   | "csc_boards" ->
       let boards = Array.of_list (Xml.children s) in

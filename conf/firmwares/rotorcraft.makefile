@@ -233,3 +233,9 @@ ap.srcs += subsystems/navigation/common_flight_plan.c
 # or
 # nothing
 #
+
+#
+# Force allocation laws
+#
+ap.CFLAGS += -DUSE_FORCE_ALLOCATION_LAWS
+ap.srcs += $(SRC_FIRMWARE)/force_allocation_laws.c

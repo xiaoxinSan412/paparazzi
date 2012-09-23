@@ -124,8 +124,12 @@ nps.srcs += $(SRC_FIRMWARE)/stabilization/stabilization_none.c
 NUM_TYPE=integer
 #NUM_TYPE=float
 
-STAB_TYPE=euler
-#STAB_TYPE=quaternion
+#
+# Stabilization: use quaternion stabilization for transitioning vehicles
+#
+
+#STAB_TYPE=euler
+STAB_TYPE=quaternion
 
 ifeq ($(NUM_TYPE), integer)
   nps.CFLAGS += -DSTABILISATION_ATTITUDE_TYPE_INT
@@ -170,3 +174,9 @@ nps.srcs += $(SRC_FIRMWARE)/guidance/guidance_v.c
 
 nps.srcs += $(SRC_FIRMWARE)/navigation.c
 nps.srcs += $(SRC_SUBSYSTEMS)/navigation/common_flight_plan.c
+
+#
+# Force allocation laws
+#
+nps.CFLAGS += -DUSE_FORCE_ALLOCATION_LAWS
+nps.srcs += $(SRC_FIRMWARE)/force_allocation_laws.c
