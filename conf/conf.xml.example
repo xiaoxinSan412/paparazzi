@@ -56,7 +56,7 @@
   />
   <aircraft
    name="atmov"
-   ac_id="27"
+   ac_id="37"
    airframe="airframes/examples/atmov_example.xml"
    radio="radios/R6107SP_7ch.xml"
    telemetry="telemetry/default_rotorcraft.xml"
