@@ -351,11 +351,13 @@ struct State {
   /** @}*/
 
 
-  /** @defgroup state_attitude
+  /** @defgroup state_attitude Attitude representations
    *  @{ */
   struct OrientationReps ned_to_body_orientation;
-  /** @}*/
 
+  struct OrientationReps ned_to_res_lift_orientation;
+  struct Int32Quat res_lift_to_body_quat_i;
+  /** @}*/
 
   /** @addtogroup state_rate
    *  @{ */
@@ -978,31 +980,43 @@ static inline bool_t stateIsAttitudeValid(void) {
 /// Set vehicle body attitude from quaternion (int).
 static inline void stateSetNedToBodyQuat_i(struct Int32Quat* ned_to_body_quat) {
   orientationSetQuat_i(&state.ned_to_body_orientation,ned_to_body_quat);
+  //if ned_to_body has changed, ned_to_res_lift is not valid anymore and has to be recomputed
+  state.ned_to_res_lift_orientation.status = 0;
 }
 
 /// Set vehicle body attitude from rotation matrix (int).
 static inline void stateSetNedToBodyRMat_i(struct Int32RMat* ned_to_body_rmat) {
   orientationSetRMat_i(&state.ned_to_body_orientation,ned_to_body_rmat);
+  //if ned_to_body has changed, ned_to_res_lift is not valid anymore and has to be recomputed
+  state.ned_to_res_lift_orientation.status = 0;
 }
 
 /// Set vehicle body attitude from euler angles (int).
 static inline void stateSetNedToBodyEulers_i(struct Int32Eulers* ned_to_body_eulers) {
   orientationSetEulers_i(&state.ned_to_body_orientation,ned_to_body_eulers);
+  //if ned_to_body has changed, ned_to_res_lift is not valid anymore and has to be recomputed
+  state.ned_to_res_lift_orientation.status = 0;
 }
 
 /// Set vehicle body attitude from quaternion (float).
 static inline void stateSetNedToBodyQuat_f(struct FloatQuat* ned_to_body_quat) {
   orientationSetQuat_f(&state.ned_to_body_orientation,ned_to_body_quat);
+  //if ned_to_body has changed, ned_to_res_lift is not valid anymore and has to be recomputed
+  state.ned_to_res_lift_orientation.status = 0;
 }
 
 /// Set vehicle body attitude from rotation matrix (float).
 static inline void stateSetNedToBodyRMat_f(struct FloatRMat* ned_to_body_rmat) {
   orientationSetRMat_f(&state.ned_to_body_orientation,ned_to_body_rmat);
+  //if ned_to_body has changed, ned_to_res_lift is not valid anymore and has to be recomputed
+  state.ned_to_res_lift_orientation.status = 0;
 }
 
 /// Set vehicle body attitude from euler angles (float).
 static inline void stateSetNedToBodyEulers_f(struct FloatEulers* ned_to_body_eulers) {
   orientationSetEulers_f(&state.ned_to_body_orientation,ned_to_body_eulers);
+  //if ned_to_body has changed, ned_to_res_lift is not valid anymore and has to be recomputed
+  state.ned_to_res_lift_orientation.status = 0;
 }
 
 /************************ Get functions ****************************/
@@ -1037,6 +1051,93 @@ static inline struct FloatEulers* stateGetNedToBodyEulers_f(void) {
   return orientationGetEulers_f(&state.ned_to_body_orientation);
 }
 /** @}*/
+
+
+/******************************************************************************
+*                                                                             *
+* Set and Get functions for the NED TO RESULTANT LIFT representations         *
+* (Calls the functions in math/pprz_orientation_conversion)                   *
+*                                                                             *
+*****************************************************************************/
+/** @addtogroup state_attitude
+* @{ */
+/************* declaration of recalculation functions *************/
+extern void stateCalcNedToResLiftQuat_i(void);
+
+/*********************** validity test functions ******************/
+
+/// Test if resultant lift orientations are valid.
+static inline bool_t stateIsResNedToLiftValid(void) {
+  return (orienationCheckValid(&state.ned_to_res_lift_orientation));
+}
+
+/************************ Set functions ****************************/
+
+/// Set resultant lift to vehicle body rotation from quaternion (int).
+/// This function is only implemented in int quaternion.
+static inline void stateSetLiftToBodyQuat_i(struct Int32Quat* res_lift_to_body_quat) {
+  QUAT_COPY(state.res_lift_to_body_quat_i, *res_lift_to_body_quat);
+  INT32_QUAT_NORMALIZE(state.res_lift_to_body_quat_i);
+  INT32_QUAT_WRAP_SHORTEST(state.res_lift_to_body_quat_i);
+  state.ned_to_res_lift_orientation.status = 0; //make it invalid, so it will be recomputed
+}
+
+/************************ Get functions ****************************/
+
+/// Get vehicle lift orientation (with respect to LTP) quaternion (int).
+static inline struct Int32Quat* stateGetNedToResLiftQuat_i(void) {
+  if(!stateIsResNedToLiftValid()) {
+      stateCalcNedToResLiftQuat_i();
+  }
+  return orientationGetQuat_i(&state.ned_to_res_lift_orientation);
+}
+
+/// Get vehicle lift orientation (with respect to LTP) rotation matrix (int).
+static inline struct Int32RMat* stateGetNedToResLiftRMat_i(void) {
+  if(!stateIsResNedToLiftValid()) {
+      stateCalcNedToResLiftQuat_i();
+  }
+  return orientationGetRMat_i(&state.ned_to_res_lift_orientation);
+}
+
+/// Get vehicle lift orientation (with respect to LTP) euler angles (int).
+static inline struct Int32Eulers* stateGetNedToResLiftEulers_i(void) {
+  if(!stateIsResNedToLiftValid()) {
+      stateCalcNedToResLiftQuat_i();
+  }
+  return orientationGetEulers_i(&state.ned_to_res_lift_orientation);
+}
+
+/// Get vehicle lift orientation (with respect to LTP) quaternion (float).
+static inline struct FloatQuat* stateGetNedToResLiftQuat_f(void) {
+  if(!stateIsResNedToLiftValid()) {
+      stateCalcNedToResLiftQuat_i();
+  }
+  return orientationGetQuat_f(&state.ned_to_res_lift_orientation);
+}
+
+/// Get vehicle lift orientation (with respect to LTP) rotation matrix (float).
+static inline struct FloatRMat* stateGetNedToResLiftRMat_f(void) {
+  if(!stateIsResNedToLiftValid()) {
+      stateCalcNedToResLiftQuat_i();
+  }
+  return orientationGetRMat_f(&state.ned_to_res_lift_orientation);
+}
+
+/// Get vehicle lift orientation (with respect to LTP) euler angles (float).
+static inline struct FloatEulers* stateGetNedToResLiftEulers_f(void) {
+  if(!stateIsResNedToLiftValid()) {
+      stateCalcNedToResLiftQuat_i();
+  }
+  return orientationGetEulers_f(&state.ned_to_res_lift_orientation);
+}
+
+/// Get resultant lift to vehicle body quaternion (int).
+static inline struct Int32Quat stateGetLiftToBodyQuat_i(void) {
+  return state.res_lift_to_body_quat_i;
+}
+/** @}*/
+
 
 
 /******************************************************************************

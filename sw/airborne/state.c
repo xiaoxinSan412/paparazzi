@@ -1135,6 +1135,25 @@ void stateCalcAccelEcef_f(void) {
 }
 /** @}*/
 
+
+/******************************************************************************
+ *                                                                            *
+ * Calculation functions for the RESULTANT LIFT representations               *
+ *                                                                            *
+ *****************************************************************************/
+/** @addtogroup state_attitude
+ *  @{ */
+//Run this when ned_to_body or lift_to_body has changed and ned_to_res_lift is requested
+void stateCalcNedToResLiftQuat_i(void) {
+  struct Int32Quat ned_to_res_lift_quat_tmp;
+  struct Int32Quat ned_to_body_quat_tmp;
+  ned_to_body_quat_tmp = *stateGetNedToBodyQuat_i();
+  INT32_QUAT_COMP_INV(ned_to_res_lift_quat_tmp, ned_to_body_quat_tmp, state.res_lift_to_body_quat_i);
+  orientationSetQuat_i(&state.ned_to_res_lift_orientation,&ned_to_res_lift_quat_tmp);
+}
+/** @}*/
+
+
 /******************************************************************************
  *                                                                            *
  * Transformation functions for the ANGULAR RATE representations              *
