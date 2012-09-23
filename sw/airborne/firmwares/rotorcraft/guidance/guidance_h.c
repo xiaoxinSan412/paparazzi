@@ -36,6 +36,10 @@
 
 #include "generated/airframe.h"
 
+#if USE_FORCE_ALLOCATION_LAWS
+#include "firmwares/rotorcraft/force_allocation_laws.h"
+#endif
+
 uint8_t guidance_h_mode;
 
 struct Int32Vect2 guidance_h_pos_sp;
@@ -183,10 +187,16 @@ void guidance_h_run(bool_t  in_flight) {
     break;
 
   case GUIDANCE_H_MODE_RATE:
+#if USE_FORCE_ALLOCATION_LAWS
+    force_allocation_laws_run();
+#endif
     stabilization_rate_run(in_flight);
     break;
 
   case GUIDANCE_H_MODE_ATTITUDE:
+#if USE_FORCE_ALLOCATION_LAWS
+    force_allocation_laws_run();
+#endif
     stabilization_attitude_run(in_flight);
     break;
 
@@ -198,39 +208,48 @@ void guidance_h_run(bool_t  in_flight) {
     /* compute roll and pitch commands and set final attitude setpoint */
     guidance_h_traj_run(in_flight);
 
+#if USE_FORCE_ALLOCATION_LAWS
+    force_allocation_laws_run();
+#endif
     stabilization_attitude_run(in_flight);
     break;
 
   case GUIDANCE_H_MODE_NAV:
-    {
-      if (!in_flight) guidance_h_nav_enter();
+    if (!in_flight) guidance_h_nav_enter();
 
-      if (horizontal_mode == HORIZONTAL_MODE_ATTITUDE) {
-        stab_att_sp_euler.phi = nav_roll;
-        stab_att_sp_euler.theta = nav_pitch;
-        /* FIXME: heading can't be set via attitude block yet, use current heading for now */
-        stab_att_sp_euler.psi = stateGetNedToBodyEulers_i()->psi;
-#ifdef STABILISATION_ATTITUDE_TYPE_QUAT
-        INT32_QUAT_OF_EULERS(stab_att_sp_quat, stab_att_sp_euler);
-        INT32_QUAT_WRAP_SHORTEST(stab_att_sp_quat);
+    if (horizontal_mode == HORIZONTAL_MODE_ATTITUDE) {
+      stab_att_sp_euler.phi = nav_roll;
+      stab_att_sp_euler.theta = nav_pitch;
+      /* FIXME: heading can't be set via attitude block yet, use current heading for now */
+#if USE_FORCE_ALLOCATION_LAWS
+      stab_att_sp_euler.psi = stateGetNedToResLiftEulers_i()->psi;
+#else
+      stab_att_sp_euler.psi = stateGetNedToBodyEulers_i()->psi;
 #endif
-      }
-      else {
-        INT32_VECT2_NED_OF_ENU(guidance_h_pos_sp, navigation_carrot);
+#ifdef STABILISATION_ATTITUDE_TYPE_QUAT
+      INT32_QUAT_OF_EULERS(stab_att_sp_quat, stab_att_sp_euler);
+      INT32_QUAT_WRAP_SHORTEST(stab_att_sp_quat);
+#endif
+    }
+    else {
+      INT32_VECT2_NED_OF_ENU(guidance_h_pos_sp, navigation_carrot);
 
 #if GUIDANCE_H_USE_REF
-        guidance_h_update_reference(TRUE);
+      guidance_h_update_reference(TRUE);
 #else
-        guidance_h_update_reference(FALSE);
+      guidance_h_update_reference(FALSE);
 #endif
-        /* set psi command */
-        guidance_h_command_body.psi = nav_heading;
-        /* compute roll and pitch commands and set final attitude setpoint */
-        guidance_h_traj_run(in_flight);
-      }
-      stabilization_attitude_run(in_flight);
-      break;
+      /* set psi command */
+      guidance_h_command_body.psi = nav_heading;
+      /* compute roll and pitch commands and set final attitude setpoint */
+      guidance_h_traj_run(in_flight);
     }
+#if USE_FORCE_ALLOCATION_LAWS
+    force_allocation_laws_run();
+#endif
+    stabilization_attitude_run(in_flight);
+    break;
+
   default:
     break;
   }
@@ -300,7 +319,12 @@ static inline void guidance_h_traj_run(bool_t in_flight) {
 
   /* Rotate to body frame */
   int32_t s_psi, c_psi;
+#if USE_FORCE_ALLOCATION_LAWS
   int32_t psi = stateGetNedToBodyEulers_i()->psi;
+#else
+  int32_t psi = stateGetNedToResLiftEulers_i()->psi;
+#endif
+
   PPRZ_ITRIG_SIN(s_psi, psi);
   PPRZ_ITRIG_COS(c_psi, psi);
 
@@ -329,7 +353,11 @@ static inline void guidance_h_hover_enter(void) {
 
   VECT2_COPY(guidance_h_pos_sp, *stateGetPositionNed_i());
 
+#if USE_FORCE_ALLOCATION_LAWS
+  guidance_h_rc_sp.psi = stateGetNedToResLiftEulers_i()->psi;
+#else
   guidance_h_rc_sp.psi = stateGetNedToBodyEulers_i()->psi;
+#endif
   reset_psi_ref_from_body();
 
   INT_VECT2_ZERO(guidance_h_pos_err_sum);
@@ -347,7 +375,12 @@ static inline void guidance_h_nav_enter(void) {
 
   /* reset psi reference, set psi setpoint to current psi */
   reset_psi_ref_from_body();
+
+#if USE_FORCE_ALLOCATION_LAWS
+  nav_heading = stateGetNedToResLiftEulers_i()->psi;
+#else
   nav_heading = stateGetNedToBodyEulers_i()->psi;
+#endif
 
   INT_VECT2_ZERO(guidance_h_pos_err_sum);
 

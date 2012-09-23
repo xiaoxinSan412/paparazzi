@@ -80,7 +80,11 @@ static inline void stabilization_attitude_read_rc_setpoint_eulers(struct Int32Eu
     }
   }
   else { /* if not flying, use current yaw as setpoint */
-    sp->psi = stateGetNedToBodyEulers_i()->psi;
+#if USE_FORCE_ALLOCATION_LAWS
+    sp->psi = stabilization_compute_heading(stateGetNedToResLiftEulers_i());
+#else
+    sp->psi = stabilization_compute_heading(stateGetNedToBodyEulers_i());
+#endif
   }
 
 }

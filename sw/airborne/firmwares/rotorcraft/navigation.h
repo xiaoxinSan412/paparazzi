@@ -28,6 +28,10 @@
 
 #include "subsystems/navigation/common_flight_plan.h"
 
+#if USE_FORCE_ALLOCATION_LAWS
+#include "firmwares/rotorcraft/force_allocation_laws.h"
+#endif
+
 #define NAV_FREQ 16
 // FIXME use periodic FREQ
 #define NAV_PRESCALER (512/NAV_FREQ)

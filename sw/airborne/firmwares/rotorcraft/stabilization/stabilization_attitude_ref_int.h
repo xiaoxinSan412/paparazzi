@@ -58,7 +58,11 @@ extern struct Int32RefModel stab_att_ref_model;
 
 
 static inline void reset_psi_ref_from_body(void) {
-  stab_att_ref_euler.psi = stateGetNedToBodyEulers_i()->psi << (REF_ANGLE_FRAC - INT32_ANGLE_FRAC);
+#if USE_FORCE_ALLOCATION_LAWS
+  stab_att_ref_euler.psi = stabilization_compute_heading(stateGetNedToResLiftEulers_i()) << (REF_ANGLE_FRAC - INT32_ANGLE_FRAC);
+#else
+  stab_att_ref_euler.psi = stabilization_compute_heading(stateGetNedToBodyEulers_i()) << (REF_ANGLE_FRAC - INT32_ANGLE_FRAC);
+#endif
   stab_att_ref_rate.r = 0;
   stab_att_ref_accel.r = 0;
 }
