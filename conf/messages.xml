@@ -548,7 +548,14 @@
     <field name="rssi_fade_margin" type="uint8" unit="dB"/>
     <field name="duty" type="uint8" unit="%"/>
   </message>
- <!-- 71 is free -->
+
+  <message name="RESLIFT_QUAT_INT" id="71">
+    <field name="lift_qi" type="int32"/>
+    <field name="lift_qx" type="int32"/>
+    <field name="lift_qy" type="int32"/>
+    <field name="lift_qz" type="int32"/>
+  </message>
+
  <!-- 72 is free -->
  <!-- 73 is free -->
  <!-- 74 is free -->

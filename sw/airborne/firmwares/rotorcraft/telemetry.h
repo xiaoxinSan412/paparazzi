@@ -863,6 +863,15 @@
 #define PERIODIC_SEND_CAM_TRACK(_trans, _dev) {}
 #endif
 
+#define PERIODIC_SEND_RESLIFT_QUAT_INT(_trans, _dev) {   \
+    DOWNLINK_SEND_RESLIFT_QUAT_INT(_trans, _dev,         \
+                  &(stateGetNedToResLiftQuat_i()->qi),   \
+                  &(stateGetNedToResLiftQuat_i()->qx),   \
+                  &(stateGetNedToResLiftQuat_i()->qy),   \
+                  &(stateGetNedToResLiftQuat_i()->qz));  \
+  }
+
+
 #include "generated/settings.h"
 #define PERIODIC_SEND_DL_VALUE(_trans, _dev) PeriodicSendDlValue(_trans, _dev)
 
