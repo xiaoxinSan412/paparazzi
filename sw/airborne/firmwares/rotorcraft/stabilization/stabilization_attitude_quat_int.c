@@ -40,21 +40,37 @@ struct Int32AttitudeGains stabilization_gains = {
   {STABILIZATION_ATTITUDE_PHI_PGAIN, STABILIZATION_ATTITUDE_THETA_PGAIN, STABILIZATION_ATTITUDE_PSI_PGAIN },
   {STABILIZATION_ATTITUDE_PHI_DGAIN, STABILIZATION_ATTITUDE_THETA_DGAIN, STABILIZATION_ATTITUDE_PSI_DGAIN },
   {STABILIZATION_ATTITUDE_PHI_DDGAIN, STABILIZATION_ATTITUDE_THETA_DDGAIN, STABILIZATION_ATTITUDE_PSI_DDGAIN },
-  {STABILIZATION_ATTITUDE_PHI_IGAIN, STABILIZATION_ATTITUDE_THETA_IGAIN, STABILIZATION_ATTITUDE_PSI_IGAIN }
+  {STABILIZATION_ATTITUDE_PHI_IGAIN, STABILIZATION_ATTITUDE_THETA_IGAIN, STABILIZATION_ATTITUDE_PSI_IGAIN },
+#if STABILIZATION_ATTITUDE_USE_AERO_ACTIVATION_GAIN
+  {STABILIZATION_ATTITUDE_PHI_AEROGAIN, STABILIZATION_ATTITUDE_THETA_AEROGAIN, STABILIZATION_ATTITUDE_PSI_AEROGAIN }
+#endif
 };
 
 /* warn if some gains are still negative */
-#if (STABILIZATION_ATTITUDE_PHI_PGAIN < 0) ||   \
-  (STABILIZATION_ATTITUDE_THETA_PGAIN < 0) ||   \
-  (STABILIZATION_ATTITUDE_PSI_PGAIN < 0)   ||   \
-  (STABILIZATION_ATTITUDE_PHI_DGAIN < 0)   ||   \
-  (STABILIZATION_ATTITUDE_THETA_DGAIN < 0) ||   \
-  (STABILIZATION_ATTITUDE_PSI_DGAIN < 0)   ||   \
-  (STABILIZATION_ATTITUDE_PHI_IGAIN < 0)   ||   \
-  (STABILIZATION_ATTITUDE_THETA_IGAIN < 0) ||   \
+#if (STABILIZATION_ATTITUDE_PHI_PGAIN < 0)    ||   \
+  (STABILIZATION_ATTITUDE_THETA_PGAIN < 0)    ||   \
+  (STABILIZATION_ATTITUDE_PSI_PGAIN < 0)      ||   \
+  (STABILIZATION_ATTITUDE_PHI_DGAIN < 0)      ||   \
+  (STABILIZATION_ATTITUDE_THETA_DGAIN < 0)    ||   \
+  (STABILIZATION_ATTITUDE_PSI_DGAIN < 0)      ||   \
+  (STABILIZATION_ATTITUDE_PHI_IGAIN < 0)      ||   \
+  (STABILIZATION_ATTITUDE_THETA_IGAIN < 0)    ||   \
   (STABILIZATION_ATTITUDE_PSI_IGAIN  < 0)
+
 #warning "ALL control gains are now positive!!!"
 #endif
+
+
+#if STABILIZATION_ATTITUDE_USE_AERO_ACTIVATION_GAIN       &&  \
+    ((STABILIZATION_ATTITUDE_PHI_AEROGAIN < 0)   ||   \
+     (STABILIZATION_ATTITUDE_THETA_AEROGAIN < 0) ||   \
+     (STABILIZATION_ATTITUDE_PSI_AEROGAIN < 0))
+
+#error "Please use positive percentages for the Aerodynamic Activation Gains.  \
+        If you want to reverse the control surface direction, use the command_laws."
+
+#endif
+
 
 struct Int32Quat stabilization_att_sum_err_quat;
 struct Int32Eulers stabilization_att_sum_err;
@@ -96,30 +112,61 @@ static void attitude_run_ff(int32_t ff_commands[], struct Int32AttitudeGains *ga
 {
   /* Compute feedforward based on reference acceleration */
 
-  ff_commands[COMMAND_ROLL]  = GAIN_PRESCALER_FF * gains->dd.x * RATE_FLOAT_OF_BFP(ref_accel->p) / (1 << 7);
-  ff_commands[COMMAND_PITCH] = GAIN_PRESCALER_FF * gains->dd.y * RATE_FLOAT_OF_BFP(ref_accel->q) / (1 << 7);
-  ff_commands[COMMAND_YAW]   = GAIN_PRESCALER_FF * gains->dd.z * RATE_FLOAT_OF_BFP(ref_accel->r) / (1 << 7);
+  int32_t ff_phi,ff_theta,ff_psi;
+  ff_phi   = GAIN_PRESCALER_FF * gains->dd.x * RATE_FLOAT_OF_BFP(ref_accel->p) / (1 << 7);
+  ff_theta = GAIN_PRESCALER_FF * gains->dd.y * RATE_FLOAT_OF_BFP(ref_accel->q) / (1 << 7);
+  ff_psi   = GAIN_PRESCALER_FF * gains->dd.z * RATE_FLOAT_OF_BFP(ref_accel->r) / (1 << 7);
+
+#if STABILIZATION_ATTITUDE_USE_AERO_ACTIVATION_GAIN
+  ff_commands[COMMAND_ROLL]  = (ff_phi   * ((1<<INT32_PERCENTAGE_FRAC) - gains->aero_activation.x)) >> INT32_PERCENTAGE_FRAC;
+  ff_commands[COMMAND_PITCH] = (ff_theta * ((1<<INT32_PERCENTAGE_FRAC) - gains->aero_activation.y)) >> INT32_PERCENTAGE_FRAC;
+  ff_commands[COMMAND_YAW]   = (ff_psi   * ((1<<INT32_PERCENTAGE_FRAC) - gains->aero_activation.z)) >> INT32_PERCENTAGE_FRAC;
+
+  ff_commands[COMMAND_ROLL_AERO]  = (ff_phi   * gains->aero_activation.x) >> INT32_PERCENTAGE_FRAC;
+  ff_commands[COMMAND_PITCH_AERO] = (ff_theta * gains->aero_activation.y) >> INT32_PERCENTAGE_FRAC;
+  ff_commands[COMMAND_YAW_AERO]   = (ff_psi   * gains->aero_activation.z) >> INT32_PERCENTAGE_FRAC;
+#else
+  ff_commands[COMMAND_ROLL]  = ff_phi;
+  ff_commands[COMMAND_PITCH] = ff_theta;
+  ff_commands[COMMAND_YAW]   = ff_psi;
+#endif
+
 }
 
 static void attitude_run_fb(int32_t fb_commands[], struct Int32AttitudeGains *gains, struct Int32Quat *att_err,
     struct Int32Rates *rate_err, struct Int32Quat *sum_err)
 {
   /*  PID feedback */
-  fb_commands[COMMAND_ROLL] =
+
+  int32_t fb_phi,fb_theta,fb_psi;
+  fb_phi =
     GAIN_PRESCALER_P * gains->p.x  * QUAT1_FLOAT_OF_BFP(att_err->qx) / 4 +
     GAIN_PRESCALER_D * gains->d.x  * RATE_FLOAT_OF_BFP(rate_err->p) / 16 +
     GAIN_PRESCALER_I * gains->i.x  * QUAT1_FLOAT_OF_BFP(sum_err->qx) / 2;
 
-  fb_commands[COMMAND_PITCH] =
+  fb_theta =
     GAIN_PRESCALER_P * gains->p.y  * QUAT1_FLOAT_OF_BFP(att_err->qy) / 4 +
     GAIN_PRESCALER_D * gains->d.y  * RATE_FLOAT_OF_BFP(rate_err->q)  / 16 +
     GAIN_PRESCALER_I * gains->i.y  * QUAT1_FLOAT_OF_BFP(sum_err->qy) / 2;
 
-  fb_commands[COMMAND_YAW] =
+  fb_psi =
     GAIN_PRESCALER_P * gains->p.z  * QUAT1_FLOAT_OF_BFP(att_err->qz) / 4 +
     GAIN_PRESCALER_D * gains->d.z  * RATE_FLOAT_OF_BFP(rate_err->r)  / 16 +
     GAIN_PRESCALER_I * gains->i.z  * QUAT1_FLOAT_OF_BFP(sum_err->qz) / 2;
 
+#if STABILIZATION_ATTITUDE_USE_AERO_ACTIVATION_GAIN
+  fb_commands[COMMAND_ROLL]  =  (fb_phi   * ((1<<INT32_PERCENTAGE_FRAC) - gains->aero_activation.x)) >> INT32_PERCENTAGE_FRAC;
+  fb_commands[COMMAND_PITCH] =  (fb_theta * ((1<<INT32_PERCENTAGE_FRAC) - gains->aero_activation.y)) >> INT32_PERCENTAGE_FRAC;
+  fb_commands[COMMAND_YAW]   =  (fb_psi   * ((1<<INT32_PERCENTAGE_FRAC) - gains->aero_activation.z)) >> INT32_PERCENTAGE_FRAC;
+
+  fb_commands[COMMAND_ROLL_AERO]  = (fb_phi   * gains->aero_activation.x) >> INT32_PERCENTAGE_FRAC;
+  fb_commands[COMMAND_PITCH_AERO] = (fb_theta * gains->aero_activation.y) >> INT32_PERCENTAGE_FRAC;
+  fb_commands[COMMAND_YAW_AERO]   = (fb_psi   * gains->aero_activation.z) >> INT32_PERCENTAGE_FRAC;
+#else
+  fb_commands[COMMAND_ROLL]  =  fb_phi;
+  fb_commands[COMMAND_PITCH] =  fb_theta;
+  fb_commands[COMMAND_YAW]   =  fb_psi;
+#endif
 }
 
 void stabilization_attitude_run(bool_t enable_integrator) {
@@ -175,10 +222,22 @@ void stabilization_attitude_run(bool_t enable_integrator) {
   stabilization_cmd[COMMAND_PITCH] = stabilization_att_fb_cmd[COMMAND_PITCH] + stabilization_att_ff_cmd[COMMAND_PITCH];
   stabilization_cmd[COMMAND_YAW] = stabilization_att_fb_cmd[COMMAND_YAW] + stabilization_att_ff_cmd[COMMAND_YAW];
 
+#if STABILIZATION_ATTITUDE_USE_AERO_ACTIVATION_GAIN
+  stabilization_cmd[COMMAND_ROLL_AERO]   = stabilization_att_fb_cmd[COMMAND_ROLL_AERO] + stabilization_att_ff_cmd[COMMAND_ROLL_AERO];
+  stabilization_cmd[COMMAND_PITCH_AERO]  = stabilization_att_fb_cmd[COMMAND_PITCH_AERO] + stabilization_att_ff_cmd[COMMAND_PITCH_AERO];
+  stabilization_cmd[COMMAND_YAW_AERO]    = stabilization_att_fb_cmd[COMMAND_YAW_AERO] + stabilization_att_ff_cmd[COMMAND_YAW_AERO];
+#endif
+
   /* bound the result */
   BoundAbs(stabilization_cmd[COMMAND_ROLL], MAX_PPRZ);
   BoundAbs(stabilization_cmd[COMMAND_PITCH], MAX_PPRZ);
   BoundAbs(stabilization_cmd[COMMAND_YAW], MAX_PPRZ);
+
+#if STABILIZATION_ATTITUDE_USE_AERO_ACTIVATION_GAIN
+  BoundAbs(stabilization_cmd[COMMAND_ROLL_AERO],  MAX_PPRZ);
+  BoundAbs(stabilization_cmd[COMMAND_PITCH_AERO], MAX_PPRZ);
+  BoundAbs(stabilization_cmd[COMMAND_YAW_AERO],   MAX_PPRZ);
+#endif
 }
 
 void stabilization_attitude_read_rc(bool_t in_flight) {

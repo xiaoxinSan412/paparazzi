@@ -33,6 +33,7 @@ struct Int32AttitudeGains {
   struct Int32Vect3  d;
   struct Int32Vect3  dd;
   struct Int32Vect3  i;
+  struct Int32Vect3  aero_activation;   ///< Aerodynamic surface activation in INT32_PERCENTAGE_FRAC (1024)
 };
 
 extern struct Int32AttitudeGains  stabilization_gains;
