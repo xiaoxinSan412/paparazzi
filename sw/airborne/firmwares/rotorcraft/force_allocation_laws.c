@@ -19,11 +19,15 @@
  * Boston, MA 02111-1307, USA.
  */
 
-/** @file firmwares/rotorcraft/guidance/force_allocation.c
+/** @file force_allocation.c
  *  Distribute Outerloop Acceleration Commands To Lifting Surfaces
- *
+ *  Also see the @ref force_allocation "Force Allocation Laws" page.
  */
 
+/**
+ * @addtogroup force_allocation Force Allocation Laws
+ * @{
+ */
 
 #include "std.h"
 #include "generated/airframe.h"
@@ -216,3 +220,8 @@ void force_allocation_laws_run(void)
   struct Int32Quat lift_to_body_quat_as_stored =  stateGetLiftToBodyQuat_i();
   INT32_QUAT_COMP(stab_att_sp_quat, command_att, lift_to_body_quat_as_stored);
 }
+
+/**
+ * @}
+ */
+

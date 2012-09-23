@@ -19,9 +19,15 @@
  * Boston, MA 02111-1307, USA.
  */
 
-/** @file firmwares/rotorcraft/guidance/force_allocation.h
- *  Distribute Outerloop Acceleration Commands To Lifting Surfaces
+/** @file force_allocation.h
+ *  Distribute Outerloop Acceleration Commands To Lifting Surfaces.
+ *  Also see the @ref force_allocation "Force Allocation Laws" page.
  *
+ */
+
+/**
+ * @defgroup force_allocation Force Allocation Laws
+ * @{
  */
 #ifndef FORCE_ALLOCATION_H
 #define FORCE_ALLOCATION_H
@@ -60,3 +66,6 @@ extern void force_allocation_laws_run(void);
 #define NavSetTransitionPercentage(x) ({ transition_percentage_nav = x; })
 
 #endif
+/**
+ * @}
+ */
