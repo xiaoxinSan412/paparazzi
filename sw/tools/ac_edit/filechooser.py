@@ -1,9 +1,11 @@
 #!/usr/bin/env python
 
+from __future__ import print_function
+
 import pygtk, gtk
 
 if gtk.pygtk_version < (2,3,90):
-	print "Please upgrade your pygtk"
+	print("Please upgrade your pygtk")
 	raise SystemExit
 
 dialog = gtk.FileChooserDialog( "Open ...", None,
@@ -20,8 +22,8 @@ dialog.add_filter(filter)
 
 response = dialog.run()
 if response == gtk.RESPONSE_OK:
-	print dialog.get_filename(), " Selected"
+	print(dialog.get_filename(), " Selected")
 elif response == gtk.RESPONSE_CANCEL:
-	print "No file selected"
+	print("No file selected")
 
 dialog.destroy()
