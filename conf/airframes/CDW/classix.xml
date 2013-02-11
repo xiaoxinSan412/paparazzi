@@ -239,6 +239,8 @@
    <load name="photogrammetry_calculator.xml" />
   </modules>
 
+<!-- ****** PHOTOGRAMMETRY ******* -->
+
 
   <section name="Photogrammetry" prefix="PHOTOGRAMMETRY_">
     <!-- Camera Parameters -->
