@@ -35,7 +35,7 @@ class Base:
    
 
     def find_firmwares(self, widget):
-        list_of_firmwares = glob.glob( PAPARAZZI_FIRMWARES + "*.makefile" )
+        list_of_firmwares = glob.glob( path.join( PAPARAZZI_FIRMWARES, "*.makefile") )
         list_of_firmwares.sort()
         self.combo.get_model().clear();
         for firm in list_of_firmwares:
@@ -47,6 +47,24 @@ class Base:
         self.combo.get_model().clear();
         for mod in list_of_modules:
             self.combo.append_text( mod.replace(".xml","").replace(PAPARAZZI_MODULES, "") )
+
+    def find_module_defines(self, widget):
+#        self.combo.get_model().clear();
+        try:
+            mod_tree = etree.parse(path.join(PAPARAZZI_MODULES, self.combo.get_active_text() + ".xml"))
+            root = mod_tree.getroot().find("doc")
+            for block in root.iter("define"):
+                print(block.tag)
+            for block in root.iter("configure"):
+                print(block.tag)
+#                for att in block.attrib:
+#                    self.treestore.append(piter, [ att ])
+
+        except (IOError, etree.XMLSyntaxError) :
+            self.error()
+
+#        for mod in list_of_modules:
+#            self.combo.append_text( mod.replace(".xml","").replace(PAPARAZZI_MODULES, "") )
 
     def process(self, widget):
         print(etree.tostring(self.tree, pretty_print=True))
@@ -122,6 +140,38 @@ class Base:
         # Allow drag and drop reordering of rows
         # self.treeview.set_reorderable(True)
         
+    def fill_datagrid_from_section(self):
+        
+        # create a TreeStore with one string column to use as the model
+        self.gridstore = gtk.ListStore(str, str, str)
+
+        self.gridstore.append( ["HEIGHT_MIN", "40", "m" ] )
+        self.gridstore.append( ["HEIGHT_MAX", "300", "m" ] )
+        self.gridstore.append( ["RADIUS_MIN", "70", "m" ] )
+
+        self.datagrid = gtk.TreeView(self.gridstore)
+
+        self.name_column = gtk.TreeViewColumn('Name')
+        self.value_column = gtk.TreeViewColumn('Value')
+        self.unit_column = gtk.TreeViewColumn('Unit')
+
+        self.datagrid.append_column(self.name_column)
+        self.datagrid.append_column(self.value_column)
+        self.datagrid.append_column(self.unit_column)
+
+        self.cell2 = gtk.CellRendererText()
+	self.cell2.Editable = True
+        self.cell3 = gtk.CellRendererText()
+	self.cell3.Editable = True
+
+        self.name_column.pack_start(self.cell2, True)
+        self.name_column.add_attribute(self.cell2, 'text', 0)
+
+        self.value_column.pack_start(self.cell3, True)
+        self.value_column.add_attribute(self.cell3, 'text', 1)
+
+        self.datagrid.set_search_column(0)
+
 
     def destroy(self, widget, data=None):
         print("You clicked close")
@@ -148,6 +198,9 @@ class Base:
         self.btnModules = gtk.Button("Modules")
         self.btnModules.connect("clicked", self.find_modules)
 
+	self.btnModuleDefines = gtk.Button("Define")
+	self.btnModuleDefines.connect("clicked", self.find_module_defines)
+
         self.btnAbout = gtk.Button("About")
         self.btnAbout.connect("clicked", self.about)
 
@@ -155,22 +208,29 @@ class Base:
         self.toolbar.pack_start(self.btnRun)
         self.toolbar.pack_start(self.btnFirmwares)
         self.toolbar.pack_start(self.btnModules)
+        self.toolbar.pack_start(self.btnModuleDefines)
         self.toolbar.pack_start(self.btnAbout)
         self.toolbar.pack_start(self.btnExit)
 
         self.box1.pack_start(self.toolbar)
 
         ##### Tree
-        
+
+	self.editor = gtk.HBox()        
+
         self.load_airframe_xml()
         self.fill_tree_from_airframe()
-        self.box1.pack_start(self.treeview)
-        
+        self.editor.pack_start(self.treeview)
+	
+        self.fill_datagrid_from_section()
+        self.editor.pack_start(self.datagrid)
+
+	self.box1.pack_start(self.editor)
+
         ##### Bottom        
 
         self.combo = gtk.combo_box_entry_new_text()
         self.combo.append_text("Entry 1")
-        self.combo.append_text("Entry 2")
         self.combo.connect("changed", self.combo_changed)
 
         self.label1 = gtk.Label("")
