@@ -28,7 +28,7 @@ class Base:
             self.tree = etree.parse(path.join(paparazzi_home, "conf/airframes/CDW/classix.xml"))
             root = self.tree.getroot()
             for block in root:
-                print block.tag
+                print(block.tag)
         except (IOError, etree.XMLSyntaxError) :
             raise
             self.error()
@@ -49,7 +49,7 @@ class Base:
             self.combo.append_text( mod.replace(".xml","").replace(PAPARAZZI_MODULES, "") )
 
     def process(self, widget):
-        print etree.tostring(self.tree, pretty_print=True)
+        print(etree.tostring(self.tree, pretty_print=True))
 
     def combo_changed(self, widget):
         print("Changed Combo")
