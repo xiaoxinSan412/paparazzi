@@ -22,11 +22,28 @@ airframe_file = path.join(paparazzi.airframes_dir, "CDW/classix.xml")
 
 class AirframeEditor:
 
+    # General Functions
+
     def load_airframe_xml(self):
+        global airframe_file
+        self.tvcolumn.set_title(airframe_file.replace(paparazzi.airframes_dir,""))
         try:
             self.airframe_xml = etree.parse(airframe_file)
             root = self.airframe_xml.getroot()
-            etree.SubElement(root, "test" )
+            self.treestore.clear()
+            for block in root:
+                name = block.get("name")
+                if name == None:
+                    name = "None"
+                
+                print(name)
+                piter = self.treestore.append(None, [ name ])
+                for elem in block:
+  	            ename = elem.get("name")
+	            if ename == None:
+	                ename = "None"
+    	            self.treestore.append(piter, [ ename ])
+
         except (IOError, etree.XMLSyntaxError, etree.XMLSyntaxError) as e:
             gui_dialogs.error_loading_xml(e.__str__())
             raise e
@@ -36,7 +53,8 @@ class AirframeEditor:
         for i in list:
             self.combo.append_text(i)
         self.combo.set_active(0)
-   
+
+    # CallBack Functions
 
     def find_firmwares(self, widget):
         list_of_firmwares = paparazzi.get_list_of_firmwares()
@@ -58,6 +76,9 @@ class AirframeEditor:
             print("define: " + d[0])
         for c in mod.configures:
             print("configure: " + c[0])
+        self.gridstore.clear()
+        for d in mod.defines:
+            self.gridstore.append( [ "define", d[0], d[1], d[2], d[3] ] )
 
     def process(self, widget):
         print(etree.tostring(self.airframe_xml, pretty_print=True))
@@ -74,94 +95,75 @@ class AirframeEditor:
         gui_dialogs.about(paparazzi_home)
 
     def open(self, widget):
-        gui_dialogs.filechooser(paparazzi.airframes_dir)
+        global airframe_file
+        filename = gui_dialogs.filechooser(paparazzi.airframes_dir)
+        if (filename == ""):
+            print("No file selected")
+            return
+        airframe_file = filename
+        self.load_airframe_xml()
+
+    # Constructor Functions        
 
     def fill_tree_from_airframe(self):
         
         # create a TreeStore with one string column to use as the model
-        self.treestore = gtk.TreeStore(str,str)
-
-        # Load the File
-        try:
-            root = self.airframe_xml.getroot()
-            for block in root:
-                name = block.get("name")
-                if name == None:
-                    name = "None"
-                
-                piter = self.treestore.append(None, [ name, block.tag ])
-                for elem in block:
-  	            ename = elem.get("name")
-	            if ename == None:
-	                ename = "None"
-	        
-    	            self.treestore.append(piter, [ ename, elem.tag ])
-
-                    #self.treestore.append(piter, [ att , block.get(att) ])
-
-        except (IOError, etree.XMLSyntaxError) :
-            self.error()
-
+        self.treestore = gtk.TreeStore(str)
 
         # create the TreeView using treestore
         self.treeview = gtk.TreeView(self.treestore)
 
         # create the TreeViewColumn to display the data
-        self.tvcolumn = gtk.TreeViewColumn('Airframe.xml')
+        self.tvcolumn = gtk.TreeViewColumn('')
 
-        # add tvcolumn to treeview
+        # add self.tvcolumn to treeview
         self.treeview.append_column(self.tvcolumn)
-
-        # create a CellRendererText to render the data
         self.cell = gtk.CellRendererText()
-
-        # add the cell to the tvcolumn and allow it to expand
         self.tvcolumn.pack_start(self.cell, True)
-
-        # set the cell "text" attribute to column 0 - retrieve text
-        # from that column in treestore
         self.tvcolumn.add_attribute(self.cell, 'text', 0)
-
-        # make it searchable
-        self.treeview.set_search_column(0)
-
-        # Allow sorting on the column
-        # self.tvcolumn.set_sort_column_id(0)
-
-        # Allow drag and drop reordering of rows
-        # self.treeview.set_reorderable(True)
         
     def fill_datagrid_from_section(self):
         
         # create a TreeStore with one string column to use as the model
-        self.gridstore = gtk.ListStore(str, str, str)
-
-        self.gridstore.append( ["HEIGHT_MIN", "40", "m" ] )
-        self.gridstore.append( ["HEIGHT_MAX", "300", "m" ] )
-        self.gridstore.append( ["RADIUS_MIN", "70", "m" ] )
+        self.gridstore = gtk.ListStore(str, str, str, str, str)
 
         self.datagrid = gtk.TreeView(self.gridstore)
 
+        self.type_column = gtk.TreeViewColumn('Type')
         self.name_column = gtk.TreeViewColumn('Name')
         self.value_column = gtk.TreeViewColumn('Value')
         self.unit_column = gtk.TreeViewColumn('Unit')
+        self.desc_column = gtk.TreeViewColumn('Description')
 
+        self.datagrid.append_column(self.type_column)
         self.datagrid.append_column(self.name_column)
         self.datagrid.append_column(self.value_column)
         self.datagrid.append_column(self.unit_column)
+        self.datagrid.append_column(self.desc_column)
 
-        self.cell2 = gtk.CellRendererText()
-        self.cell2.Editable = True
-        self.cell3 = gtk.CellRendererText()
-        self.cell3.Editable = True
+        self.type_cell = gtk.CellRendererText()
+        self.type_cell.Editable = False
+        self.name_cell = gtk.CellRendererText()
+        self.name_cell.Editable = False
+        self.value_cell = gtk.CellRendererText()
+        self.value_cell.Editable = True
+        self.unit_cell = gtk.CellRendererText()
+        self.unit_cell.Editable = False
+        self.desc_cell = gtk.CellRendererText()
+        self.desc_cell.Editable = False
 
-        self.name_column.pack_start(self.cell2, True)
-        self.name_column.add_attribute(self.cell2, 'text', 0)
+        self.type_column.pack_start(self.type_cell, True)
+        self.type_column.add_attribute(self.type_cell, 'text', 0)
+        self.name_column.pack_start(self.name_cell, True)
+        self.name_column.add_attribute(self.name_cell, 'text', 1)
+        self.value_column.pack_start(self.value_cell, True)
+        self.value_column.add_attribute(self.value_cell, 'text', 2)
+        self.unit_column.pack_start(self.unit_cell, True)
+        self.unit_column.add_attribute(self.unit_cell, 'text', 3)
+        self.desc_column.pack_start(self.desc_cell, True)
+        self.desc_column.add_attribute(self.desc_cell, 'text', 4)
 
-        self.value_column.pack_start(self.cell3, True)
-        self.value_column.add_attribute(self.cell3, 'text', 1)
-
-        self.datagrid.set_search_column(0)
+        self.datagrid.set_search_column(1)
         self.name_column.set_sort_column_id(0)
         self.datagrid.set_reorderable(True)
 
@@ -218,7 +220,6 @@ class AirframeEditor:
 
         self.editor = gtk.HBox()
 
-        self.load_airframe_xml()
         self.fill_tree_from_airframe()
         self.editor.pack_start(self.treeview)
 	
@@ -229,6 +230,8 @@ class AirframeEditor:
 
         self.text_box = gtk.Label("")
         self.editor.pack_start(self.text_box)
+
+        self.load_airframe_xml()
 
         ##### Bottom        
 

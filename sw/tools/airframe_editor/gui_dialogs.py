@@ -29,7 +29,6 @@ def filechooser(pathname):
     filename = ""
     if response == gtk.RESPONSE_OK:
         filename = dialog.get_filename()
-        print(filename, " Selected")
     elif response == gtk.RESPONSE_CANCEL:
         print("No file selected")
 

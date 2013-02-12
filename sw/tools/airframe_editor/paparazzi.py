@@ -57,9 +57,9 @@ def get_module_information(module_name):
         root = xml.getroot().find("doc")
         str_desc = root.find("description").text
         for block in root.iter("define"):
-            lst_def.append([block.get("name"), block.get("value"), block.get("description")])
+            lst_def.append([block.get("name"), block.get("value"), block.get("unit"), block.get("description")])
         for block in root.iter("configure"):
-            lst_conf.append([block.get("name"), block.get("value"), block.get("description")])
+            lst_conf.append([block.get("name"), block.get("value"), block.get("unit"), block.get("description")])
     except (IOError, ET.XMLSyntaxError) as e:
         print(e.__str__())
 
