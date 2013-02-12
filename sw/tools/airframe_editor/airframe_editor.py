@@ -3,32 +3,22 @@
 from __future__ import print_function
 
 import pygtk
-pygtk.require('2.0')
 import gtk
-import glob
+pygtk.require('2.0')
+
 from os import path, getenv
 
 from lxml import etree
 #lxml.require('1.3.4')
 
+# Owm Modules
 import gui_dialogs
 import airframe_xml
 import paparazzi
 
 
-# if PAPARAZZI_HOME not set, then assume the tree containing this
-# file is a reasonable substitute
-paparazzi_home = getenv("PAPARAZZI_HOME", path.normpath(path.join(
-                        path.dirname(path.abspath(__file__)),
-                        '../../../')))
-
-# Directories
-paparazzi_firmwares = path.join(paparazzi_home, "conf/firmwares/")
-paparazzi_modules   = path.join(paparazzi_home, "conf/modules/")
-paparazzi_airframes = path.join(paparazzi_home, "conf/airframes/")
-
 # Airframe File
-airframe_file = path.join(paparazzi_airframes, "CDW/classix.xml")
+airframe_file = path.join(paparazzi.airframes_dir, "CDW/classix.xml")
 
 class AirframeEditor:
 
@@ -53,7 +43,7 @@ class AirframeEditor:
         self.update_combo(list_of_firmwares)
     
     def find_modules(self, widget):
-        list_of_modules = paparazzi.get_list_of_firmwares()
+        list_of_modules = paparazzi.get_list_of_modules()
         self.update_combo(list_of_modules)
 
     def find_subsystems(self, widget):
@@ -61,22 +51,12 @@ class AirframeEditor:
         self.update_combo(list_of_subsystems)
 
     def find_module_defines(self, widget):
-        try:
-            mod_tree = etree.parse(path.join(paparazzi_modules, self.combo.get_active_text() + ".xml"))
-            root = mod_tree.getroot().find("doc")
-            for block in root.iter("define"):
-                print(block.tag)
-            for block in root.iter("configure"):
-                print(block.tag)
-#                for att in block.attrib:
-#                    self.treestore.append(piter, [ att ])
-
-        except (IOError, etree.XMLSyntaxError) as e:
-            gui_dialogs.error_loading_xml(e.__str__())
-            raise e
-
-#        for mod in list_of_modules:
-#            self.combo.append_text( mod.replace(".xml","").replace(paparazzi_modules, "") )
+        mod = paparazzi.get_module_information(self.combo.get_active_text())
+        print(mod.description)
+        for d in mod.defines:
+            print("define: " + d[0])
+        for c in mod.configures:
+            print("configure: " + c[0])
 
     def process(self, widget):
         print(etree.tostring(self.airframe_xml, pretty_print=True))
@@ -85,7 +65,6 @@ class AirframeEditor:
     def combo_changed(self, widget):
         print("Changed Combo")
         self.textbox.set_text(widget.get_active_text())
-
 
     def textchanged(self, widget):
         self.label1.set_text(self.textbox.get_text())
@@ -184,12 +163,11 @@ class AirframeEditor:
 
 
     def destroy(self, widget, data=None):
-        print("You clicked close")
         gtk.main_quit()
 
     def __init__(self):
         self.window = gtk.Window(gtk.WINDOW_TOPLEVEL)
-        # self.window.set_size_request(800,600)
+        self.window.set_size_request(800,600)
         self.window.set_title("Paparazzi Airframe File Editor")
 
         self.box1 = gtk.VBox()
@@ -230,7 +208,7 @@ class AirframeEditor:
 
         ##### Tree
 
-	self.editor = gtk.HBox()        
+        self.editor = gtk.HBox()
 
         self.load_airframe_xml()
         self.fill_tree_from_airframe()
@@ -239,12 +217,13 @@ class AirframeEditor:
         self.fill_datagrid_from_section()
         self.editor.pack_start(self.datagrid)
 
-	self.box1.pack_start(self.editor)
+        self.box1.pack_start(self.editor)
 
         ##### Bottom        
 
         self.combo = gtk.combo_box_entry_new_text()
-        self.combo.append_text("Entry 1")
+        self.combo.append_text("digital_cam")
+        self.combo.set_active(0)
         self.combo.connect("changed", self.combo_changed)
         self.toolbar.pack_start(self.combo)
 
@@ -265,7 +244,8 @@ class AirframeEditor:
 
 if __name__ == "__main__":
     import sys
-    airframe_file = sys.argv[1]
+    if (len(sys.argv) > 1):
+        airframe_file = sys.argv[1]
     gui = AirframeEditor()
     gui.main()
 
