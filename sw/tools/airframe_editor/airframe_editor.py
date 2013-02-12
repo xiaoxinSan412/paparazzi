@@ -9,8 +9,12 @@ import glob
 from os import path, getenv
 
 from lxml import etree
+#lxml.require('1.3.4')
 
 import gui_dialogs
+import airframe_xml
+import paparazzi
+
 
 # if PAPARAZZI_HOME not set, then assume the tree containing this
 # file is a reasonable substitute
@@ -36,28 +40,25 @@ class AirframeEditor:
         except (IOError, etree.XMLSyntaxError, etree.XMLSyntaxError) as e:
             gui_dialogs.error_loading_xml(e.__str__())
             raise e
-   
-    def organize_airframe_xml(self):
-        self.airframe = etree.XML("<!DOCTYPE airframe SYSTEM \"../airframe.dtd\"><!-- Airframe comment --> <airframe/>")
-	child2 = etree.SubElement(self.airframe, "firmwares")
-	child2 = etree.SubElement(self.airframe, "modules")
-	child2 = etree.SubElement(self.airframe, "gains")
-        print(etree.tostring(self.airframe))
 
+    def update_combo(self,list):
+        self.combo.get_model().clear()
+        for i in list:
+            self.combo.append_text(i)
+        self.combo.set_active(0)
+   
 
     def find_firmwares(self, widget):
-        list_of_firmwares = glob.glob( path.join( paparazzi_firmwares, "*.makefile") )
-        list_of_firmwares.sort()
-        self.combo.get_model().clear();
-        for firm in list_of_firmwares:
-            self.combo.append_text( firm.replace(".makefile","").replace(paparazzi_firmwares, "") )
-
+        list_of_firmwares = paparazzi.get_list_of_firmwares()
+        self.update_combo(list_of_firmwares)
+    
     def find_modules(self, widget):
-        list_of_modules = glob.glob( paparazzi_modules + "*.xml" )
-        list_of_modules.sort();
-        self.combo.get_model().clear();
-        for mod in list_of_modules:
-            self.combo.append_text( mod.replace(".xml","").replace(paparazzi_modules, "") )
+        list_of_modules = paparazzi.get_list_of_firmwares()
+        self.update_combo(list_of_modules)
+
+    def find_subsystems(self, widget):
+        list_of_subsystems = paparazzi.get_list_of_subsystems(self.combo.get_active_text())
+        self.update_combo(list_of_subsystems)
 
     def find_module_defines(self, widget):
         try:
@@ -204,11 +205,14 @@ class AirframeEditor:
         self.btnFirmwares = gtk.Button("Firmwares")
         self.btnFirmwares.connect("clicked", self.find_firmwares)
 
+        self.btnSubSystem = gtk.Button("SubSystems")
+        self.btnSubSystem.connect("clicked", self.find_subsystems)
+
         self.btnModules = gtk.Button("Modules")
         self.btnModules.connect("clicked", self.find_modules)
 
-	self.btnModuleDefines = gtk.Button("Define")
-	self.btnModuleDefines.connect("clicked", self.find_module_defines)
+        self.btnModuleDefines = gtk.Button("Define")
+        self.btnModuleDefines.connect("clicked", self.find_module_defines)
 
         self.btnAbout = gtk.Button("About")
         self.btnAbout.connect("clicked", self.about)
@@ -216,6 +220,7 @@ class AirframeEditor:
         self.toolbar = gtk.HBox()
         self.toolbar.pack_start(self.btnRun)
         self.toolbar.pack_start(self.btnFirmwares)
+        self.toolbar.pack_start(self.btnSubSystem)
         self.toolbar.pack_start(self.btnModules)
         self.toolbar.pack_start(self.btnModuleDefines)
         self.toolbar.pack_start(self.btnAbout)
@@ -241,6 +246,7 @@ class AirframeEditor:
         self.combo = gtk.combo_box_entry_new_text()
         self.combo.append_text("Entry 1")
         self.combo.connect("changed", self.combo_changed)
+        self.toolbar.pack_start(self.combo)
 
         self.label1 = gtk.Label("")
 
@@ -249,7 +255,6 @@ class AirframeEditor:
         
         self.box1.pack_start(self.label1)
         self.box1.pack_start(self.textbox)
-        self.box1.pack_start(self.combo)
 
         self.window.add(self.box1)
         self.window.show_all()
