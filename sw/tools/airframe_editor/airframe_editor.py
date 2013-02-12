@@ -13,7 +13,7 @@ from lxml import etree
 
 # Owm Modules
 import gui_dialogs
-import airframe_xml
+import pprz_xml
 import paparazzi
 
 
@@ -49,10 +49,12 @@ class AirframeEditor:
             raise e
 
     def update_combo(self,list):
+        #self.combo.connect("changed", None)
         self.combo.get_model().clear()
         for i in list:
             self.combo.append_text(i)
         self.combo.set_active(0)
+        #self.combo.connect("changed", self.combo_changed)
 
     # CallBack Functions
 
@@ -81,8 +83,8 @@ class AirframeEditor:
             self.gridstore.append( [ "define", d[0], d[1], d[2], d[3] ] )
 
     def process(self, widget):
-        print(etree.tostring(self.airframe_xml, pretty_print=True))
-        xml_parsing.organize_airframe_xml()
+        # print(etree.tostring(self.airframe_xml, pretty_print=True))
+        pprz_xml.reorganize_airframe_xml(self.airframe_xml)
 
     def combo_changed(self, widget):
         print("Changed Combo")

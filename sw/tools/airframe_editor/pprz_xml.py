@@ -60,22 +60,68 @@ def indent(elem, level=0, more_sibs=False):
             if more_sibs:
                 elem.tail += '  '
 
-def organize_airframe_xml():
+
+def find_and_add(source, target, search):
+    temp = source.getroot().findall(search)
+    if temp == None:
+        return
+    target.extend(temp)
+
+def find_and_add_sections_with_name(source, target, find_name):
+    for block in source.getroot():
+        name = block.get("name")
+        if name == find_name:
+            target.append(block)
+
+
+
+def reorganize_airframe_xml(airframe_xml):
     airframe = ET.fromstring("<!DOCTYPE airframe SYSTEM \"airframe.dtd\"><!-- \n\tAirframe comment \n--> <airframe/>")
     child1 = ET.Comment("+-+-+-+-+-+-+- FIRMWARES -+-+-+-+-+-+-+")
     airframe.append(child1)
-    child2 = ET.SubElement(airframe, "firmware")
-    #airframe.append(airframe_xml.getroot().find("firmware"))
+
+    find_and_add(airframe_xml, airframe, "firmware")
+
     airframe.append(ET.Comment("+-+-+-+-+-+-+-  MODULES  -+-+-+-+-+-+-+"))
-    child3 = ET.SubElement(airframe, "modules")
+    find_and_add(airframe_xml, airframe, "modules")
+
     airframe.append(ET.Comment("+-+-+-+-+-+-+- ACTUATORS -+-+-+-+-+-+-+"))
+    find_and_add(airframe_xml, airframe, "servos")
+    find_and_add(airframe_xml, airframe, "commands")
+    find_and_add(airframe_xml, airframe, "rc_commands")
+    find_and_add_sections_with_name(airframe_xml,airframe,"SERVO_MIXER_GAINS")
+    find_and_add(airframe_xml, airframe, "command_laws")
+    find_and_add_sections_with_name(airframe_xml,airframe,"FAILSAFE")
+
+    airframe.append(ET.Comment("+-+-+-+-+-+-+-  SENSORS  -+-+-+-+-+-+-+"))
+    find_and_add_sections_with_name(airframe_xml,airframe,"ADC")
+    find_and_add_sections_with_name(airframe_xml,airframe,"INS")
+    find_and_add_sections_with_name(airframe_xml,airframe,"AHRS")
+    find_and_add_sections_with_name(airframe_xml,airframe,"XSENS")
+
     airframe.append(ET.Comment("+-+-+-+-+-+-+-   GAINS   -+-+-+-+-+-+-+"))
-    child4 = ET.SubElement(airframe, "section")
-    child5 = ET.SubElement(airframe, "section")
-    child6 = ET.SubElement(child4, "define")
+    find_and_add_sections_with_name(airframe_xml,airframe,"HORIZONTAL CONTROL")
+    find_and_add_sections_with_name(airframe_xml,airframe,"VERTICAL CONTROL")
+    find_and_add_sections_with_name(airframe_xml,airframe,"AGGRESSIVE")
+
+
     airframe.append(ET.Comment("+-+-+-+-+-+-+-   MISC    -+-+-+-+-+-+-+"))
+
+    for block in airframe_xml.getroot():
+        name = block.get("name")
+        if name == None:
+            name = "None"
+        if (block.tag == "firmware"):
+            print("firmware",block.tag, name)
+        elif (block.tag in ["servos", "commands", "rc_commands", "command_laws"]):
+            print("actuator",block.tag, name)
+        else:
+            print("other",block.tag, name)
+            airframe.append(block)
+
+
     indent(airframe)
-    child1.tail = "\n\n" + child1.tail
+    #print(etree.tostring(airframe))
     ET.ElementTree(airframe).write('test.xml',pretty_print=True)
 
 
@@ -89,6 +135,6 @@ def organize_airframe_xml():
 
 if __name__ == '__main__':
     print(paparazzi.home_dir)
-    organize_airframe_xml()
+    reorganize_airframe_xml(ET.fromstring("<!DOCTYPE airframe SYSTEM \"airframe.dtd\"><!-- \n\tAirframe comment \n--> <airframe/>"))
 
     print("test")
