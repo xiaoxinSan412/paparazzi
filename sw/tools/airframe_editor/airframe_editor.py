@@ -19,7 +19,7 @@ paparazzi_home = getenv("PAPARAZZI_HOME", path.normpath(path.join(
                         '../../../')))
 
 # Directories
-paparazzi_airframes = path.join(paparazzi_home, "conf/firmwares/")
+paparazzi_firmwares = path.join(paparazzi_home, "conf/firmwares/")
 paparazzi_modules   = path.join(paparazzi_home, "conf/modules/")
 paparazzi_airframes = path.join(paparazzi_home, "conf/airframes/")
 
@@ -46,11 +46,11 @@ class AirframeEditor:
 
 
     def find_firmwares(self, widget):
-        list_of_firmwares = glob.glob( path.join( paparazzi_airframes, "*.makefile") )
+        list_of_firmwares = glob.glob( path.join( paparazzi_firmwares, "*.makefile") )
         list_of_firmwares.sort()
         self.combo.get_model().clear();
         for firm in list_of_firmwares:
-            self.combo.append_text( firm.replace(".makefile","").replace(paparazzi_airframes, "") )
+            self.combo.append_text( firm.replace(".makefile","").replace(paparazzi_firmwares, "") )
 
     def find_modules(self, widget):
         list_of_modules = glob.glob( paparazzi_modules + "*.xml" )
