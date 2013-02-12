@@ -19,6 +19,7 @@ home_dir = getenv("home_dir", path.normpath(path.join(
 firmwares_dir = path.join(home_dir, "conf/firmwares/")
 modules_dir   = path.join(home_dir, "conf/modules/")
 airframes_dir = path.join(home_dir, "conf/airframes/")
+boards_dir    = path.join(home_dir, "conf/boards/")
 
 # Structures
 PprzModule = namedtuple("PprzModule", "description defines configures")
@@ -37,6 +38,9 @@ def get_list_of_modules():
     
 def get_list_of_firmwares():
     return get_list_of_files( firmwares_dir, ".makefile" )
+
+def get_list_of_boards():
+    return get_list_of_files( boards_dir, ".makefile" )
 
 def get_list_of_subsystems(firmware):
     subsys_dir = path.join( firmwares_dir, "subsystems/" + firmware + "/" )
@@ -64,4 +68,20 @@ def get_module_information(module_name):
         print(e.__str__())
 
     return PprzModule(description=str_desc, defines=lst_def, configures=lst_conf)
+
+
+
+if __name__ == '__main__':
+    print("====HOME==== ", home_dir)
+    print("----MODULES---- ", modules_dir)
+    print(get_list_of_modules())
+    for mod in get_list_of_modules():
+        print(mod, " ---> ", get_module_information(mod))
+    print("----FIRMWARES---- ", firmwares_dir)
+    print(get_list_of_firmwares())
+    for firm in get_list_of_firmwares():
+        print(firm, " ---> ", get_list_of_subsystems(firm))
+    print("shared", " ---> ", get_list_of_subsystems("shared"))
+    print("----BOARDS---- ", firmwares_dir)
+    print(get_list_of_boards())
 

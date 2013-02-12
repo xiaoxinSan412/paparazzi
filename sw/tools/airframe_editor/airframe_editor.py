@@ -6,14 +6,11 @@ import pygtk
 import gtk
 pygtk.require('2.0')
 
-from os import path, getenv
-
-from lxml import etree
-#lxml.require('1.3.4')
+from os import path
 
 # Owm Modules
 import gui_dialogs
-import pprz_xml
+import xml_airframe
 import paparazzi
 
 
@@ -27,24 +24,8 @@ class AirframeEditor:
     def load_airframe_xml(self):
         global airframe_file
         self.tvcolumn.set_title(airframe_file.replace(paparazzi.airframes_dir,""))
-        try:
-            self.airframe_xml = etree.parse(airframe_file)
-            root = self.airframe_xml.getroot()
-            self.treestore.clear()
-            for block in root:
-                name = block.get("name")
-                if name == None:
-                    name = "None"
-                
-                print(name)
-                piter = self.treestore.append(None, [ name ])
-                for elem in block:
-  	            ename = elem.get("name")
-	            if ename == None:
-	                ename = "None"
-    	            self.treestore.append(piter, [ ename ])
-
-        except (IOError, etree.XMLSyntaxError, etree.XMLSyntaxError) as e:
+        [e, self.xml] = xml_airframe.load(airframe_file, self.treestore)
+        if (e):
             gui_dialogs.error_loading_xml(e.__str__())
             raise e
 
@@ -84,7 +65,7 @@ class AirframeEditor:
 
     def process(self, widget):
         # print(etree.tostring(self.airframe_xml, pretty_print=True))
-        pprz_xml.reorganize_airframe_xml(self.airframe_xml)
+        xml_airframe.reorganize_airframe_xml(self.xml)
 
     def combo_changed(self, widget):
         print("Changed Combo")
