@@ -239,7 +239,7 @@
    <load name="photogrammetry_calculator.xml" />
   </modules>
 
-<!-- ****** PHOTOGRAMMETRY ******* -->
+<!--+-+-+-+-+-+-+-+-+ PHOTOGRAMMETRY +-+-+-+-+-+-+-+-+-->
 
 
   <section name="Photogrammetry" prefix="PHOTOGRAMMETRY_">
