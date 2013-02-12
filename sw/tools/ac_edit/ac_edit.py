@@ -9,7 +9,6 @@ import glob
 from os import path, getenv
 
 from lxml import etree
-#from elementtree.ElementTree import parse
 
 # if PAPARAZZI_HOME not set, then assume the tree containing this
 # file is a reasonable substitute
@@ -17,41 +16,51 @@ paparazzi_home = getenv("PAPARAZZI_HOME", path.normpath(path.join(
                         path.dirname(path.abspath(__file__)),
                         '../../../')))
 
-PAPARAZZI_FIRMWARES = path.join(paparazzi_home, "conf/firmwares/")
-PAPARAZZI_MODULES = path.join(paparazzi_home, "conf/modules/")
+# Directories
+paparazzi_airframes = path.join(paparazzi_home, "conf/firmwares/")
+paparazzi_modules   = path.join(paparazzi_home, "conf/modules/")
+paparazzi_airframes = path.join(paparazzi_home, "conf/airframes/")
 
+# Airframe File
+airframe_file = path.join(paparazzi_airframes, "CDW/classix.xml")
 
-class Base:
+class AirframeEditor:
 
     def load_airframe_xml(self):
         try:
-            self.tree = etree.parse(path.join(paparazzi_home, "conf/airframes/CDW/classix.xml"))
-            root = self.tree.getroot()
-            for block in root:
-                print(block.tag)
+            self.airframe_xml = etree.parse(airframe_file)
+            root = self.airframe_xml.getroot()
+            etree.SubElement(root, "test" )
         except (IOError, etree.XMLSyntaxError) :
             raise
             self.error()
    
+    def organize_airframe_xml(self):
+        self.airframe = etree.XML("<!DOCTYPE airframe SYSTEM \"../airframe.dtd\"><!-- Airframe comment --> <airframe/>")
+	child2 = etree.SubElement(self.airframe, "firmwares")
+	child2 = etree.SubElement(self.airframe, "modules")
+	child2 = etree.SubElement(self.airframe, "gains")
+        print(etree.tostring(self.airframe))
+
 
     def find_firmwares(self, widget):
-        list_of_firmwares = glob.glob( path.join( PAPARAZZI_FIRMWARES, "*.makefile") )
+        list_of_firmwares = glob.glob( path.join( paparazzi_airframes, "*.makefile") )
         list_of_firmwares.sort()
         self.combo.get_model().clear();
         for firm in list_of_firmwares:
-            self.combo.append_text( firm.replace(".makefile","").replace(PAPARAZZI_FIRMWARES, "") )
+            self.combo.append_text( firm.replace(".makefile","").replace(paparazzi_airframes, "") )
 
     def find_modules(self, widget):
-        list_of_modules = glob.glob( PAPARAZZI_MODULES + "*.xml" )
+        list_of_modules = glob.glob( paparazzi_modules + "*.xml" )
         list_of_modules.sort();
         self.combo.get_model().clear();
         for mod in list_of_modules:
-            self.combo.append_text( mod.replace(".xml","").replace(PAPARAZZI_MODULES, "") )
+            self.combo.append_text( mod.replace(".xml","").replace(paparazzi_modules, "") )
 
     def find_module_defines(self, widget):
 #        self.combo.get_model().clear();
         try:
-            mod_tree = etree.parse(path.join(PAPARAZZI_MODULES, self.combo.get_active_text() + ".xml"))
+            mod_tree = etree.parse(path.join(paparazzi_modules, self.combo.get_active_text() + ".xml"))
             root = mod_tree.getroot().find("doc")
             for block in root.iter("define"):
                 print(block.tag)
@@ -64,10 +73,11 @@ class Base:
             self.error()
 
 #        for mod in list_of_modules:
-#            self.combo.append_text( mod.replace(".xml","").replace(PAPARAZZI_MODULES, "") )
+#            self.combo.append_text( mod.replace(".xml","").replace(paparazzi_modules, "") )
 
     def process(self, widget):
-        print(etree.tostring(self.tree, pretty_print=True))
+        print(etree.tostring(self.airframe_xml, pretty_print=True))
+        self.organize_airframe_xml()
 
     def combo_changed(self, widget):
         print("Changed Combo")
@@ -98,15 +108,25 @@ class Base:
     def fill_tree_from_airframe(self):
         
         # create a TreeStore with one string column to use as the model
-        self.treestore = gtk.TreeStore(str)
+        self.treestore = gtk.TreeStore(str,str)
 
         # Load the File
         try:
-            root = self.tree.getroot()
+            root = self.airframe_xml.getroot()
             for block in root:
-                piter = self.treestore.append(None, [ block.tag ])
-                for att in block.attrib:
-                    self.treestore.append(piter, [ att ])
+                name = block.get("name")
+                if name == None:
+                    name = "None"
+                
+                piter = self.treestore.append(None, [ name, block.tag ])
+                for elem in block:
+  	            ename = elem.get("name")
+	            if ename == None:
+	                ename = "None"
+	        
+    	            self.treestore.append(piter, [ ename, elem.tag ])
+
+                    #self.treestore.append(piter, [ att , block.get(att) ])
 
         except (IOError, etree.XMLSyntaxError) :
             self.error()
@@ -171,6 +191,8 @@ class Base:
         self.value_column.add_attribute(self.cell3, 'text', 1)
 
         self.datagrid.set_search_column(0)
+	self.name_column.set_sort_column_id(0)
+	self.datagrid.set_reorderable(True)
 
 
     def destroy(self, widget, data=None):
@@ -250,6 +272,8 @@ class Base:
         gtk.main()
 
 if __name__ == "__main__":
-    base = Base()
-    base.main()
+    import sys
+    airframe_file = sys.argv[1]
+    gui = AirframeEditor()
+    gui.main()
 
