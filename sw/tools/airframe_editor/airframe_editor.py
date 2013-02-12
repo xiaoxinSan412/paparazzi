@@ -73,6 +73,9 @@ class AirframeEditor:
     def about(self, widget):
         gui_dialogs.about(paparazzi_home)
 
+    def open(self, widget):
+        gui_dialogs.filechooser(paparazzi.airframes_dir)
+
     def fill_tree_from_airframe(self):
         
         # create a TreeStore with one string column to use as the model
@@ -168,16 +171,19 @@ class AirframeEditor:
 
     def __init__(self):
         self.window = gtk.Window(gtk.WINDOW_TOPLEVEL)
-        self.window.set_size_request(800,600)
+        self.window.set_size_request(1024,800)
         self.window.set_title("Paparazzi Airframe File Editor")
 
-        self.box1 = gtk.VBox()
+        self.my_vbox = gtk.VBox()
 
         ##### Buttons
         self.btnExit = gtk.Button("Exit")
         self.btnExit.connect("clicked", self.destroy)
         self.btnExit.set_tooltip_text("Close application")
-        
+
+        self.btnOpen = gtk.Button("Open")
+        self.btnOpen.connect("clicked", self.open)        
+
         self.btnRun = gtk.Button("Run")
         self.btnRun.connect("clicked", self.process)
 
@@ -197,6 +203,7 @@ class AirframeEditor:
         self.btnAbout.connect("clicked", self.about)
 
         self.toolbar = gtk.HBox()
+        self.toolbar.pack_start(self.btnOpen)
         self.toolbar.pack_start(self.btnRun)
         self.toolbar.pack_start(self.btnFirmwares)
         self.toolbar.pack_start(self.btnSubSystem)
@@ -205,9 +212,9 @@ class AirframeEditor:
         self.toolbar.pack_start(self.btnAbout)
         self.toolbar.pack_start(self.btnExit)
 
-        self.box1.pack_start(self.toolbar)
+        self.my_vbox.pack_start(self.toolbar)
 
-        ##### Tree
+        ##### Middle
 
         self.editor = gtk.HBox()
 
@@ -218,7 +225,10 @@ class AirframeEditor:
         self.fill_datagrid_from_section()
         self.editor.pack_start(self.datagrid)
 
-        self.box1.pack_start(self.editor)
+        self.my_vbox.pack_start(self.editor)
+
+        self.text_box = gtk.Label("")
+        self.editor.pack_start(self.text_box)
 
         ##### Bottom        
 
@@ -228,15 +238,12 @@ class AirframeEditor:
         self.combo.connect("changed", self.combo_changed)
         self.toolbar.pack_start(self.combo)
 
-        self.text_box = gtk.Label("")
-
         self.textbox = gtk.Entry()
         self.textbox.connect("changed",self.textchanged)
         
-        self.editor.pack_start(self.text_box)
-        self.box1.pack_start(self.textbox)
+        self.my_vbox.pack_start(self.textbox)
 
-        self.window.add(self.box1)
+        self.window.add(self.my_vbox)
         self.window.show_all()
         self.window.connect("destroy", self.destroy)
 

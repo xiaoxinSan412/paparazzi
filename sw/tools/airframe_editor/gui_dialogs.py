@@ -11,13 +11,14 @@ if gtk.pygtk_version < (2,3,90):
     raise SystemExit
 
 
-def filechooser(path):
+def filechooser(pathname):
     dialog = gtk.FileChooserDialog( "Open ...", None,
         gtk.FILE_CHOOSER_ACTION_OPEN,
         (gtk.STOCK_CANCEL, gtk.RESPONSE_CANCEL, 
         gtk.STOCK_OPEN, gtk.RESPONSE_OK))
 
     dialog.set_default_response(gtk.RESPONSE_OK)
+    dialog.set_current_folder(pathname)
 
     filter = gtk.FileFilter()
     filter.set_name("Airframe File")
@@ -25,12 +26,15 @@ def filechooser(path):
     dialog.add_filter(filter)
 
     response = dialog.run()
+    filename = ""
     if response == gtk.RESPONSE_OK:
-        print(dialog.get_filename(), " Selected")
+        filename = dialog.get_filename()
+        print(filename, " Selected")
     elif response == gtk.RESPONSE_CANCEL:
         print("No file selected")
 
     dialog.destroy()
+    return filename
 
 def error_loading_xml(str):
     err_msg = gtk.MessageDialog(None, gtk.DIALOG_DESTROY_WITH_PARENT,
