@@ -10,6 +10,8 @@ from os import path, getenv
 
 from lxml import etree
 
+import gui_dialogs
+
 # if PAPARAZZI_HOME not set, then assume the tree containing this
 # file is a reasonable substitute
 paparazzi_home = getenv("PAPARAZZI_HOME", path.normpath(path.join(
@@ -31,9 +33,9 @@ class AirframeEditor:
             self.airframe_xml = etree.parse(airframe_file)
             root = self.airframe_xml.getroot()
             etree.SubElement(root, "test" )
-        except (IOError, etree.XMLSyntaxError) :
-            raise
-            self.error()
+        except (IOError, etree.XMLSyntaxError, etree.XMLSyntaxError) as e:
+            gui_dialogs.error_loading_xml(e.__str__())
+            raise e
    
     def organize_airframe_xml(self):
         self.airframe = etree.XML("<!DOCTYPE airframe SYSTEM \"../airframe.dtd\"><!-- Airframe comment --> <airframe/>")
@@ -58,7 +60,6 @@ class AirframeEditor:
             self.combo.append_text( mod.replace(".xml","").replace(paparazzi_modules, "") )
 
     def find_module_defines(self, widget):
-#        self.combo.get_model().clear();
         try:
             mod_tree = etree.parse(path.join(paparazzi_modules, self.combo.get_active_text() + ".xml"))
             root = mod_tree.getroot().find("doc")
@@ -69,8 +70,9 @@ class AirframeEditor:
 #                for att in block.attrib:
 #                    self.treestore.append(piter, [ att ])
 
-        except (IOError, etree.XMLSyntaxError) :
-            self.error()
+        except (IOError, etree.XMLSyntaxError) as e:
+            gui_dialogs.error_loading_xml(e.__str__())
+            raise e
 
 #        for mod in list_of_modules:
 #            self.combo.append_text( mod.replace(".xml","").replace(paparazzi_modules, "") )
@@ -88,22 +90,7 @@ class AirframeEditor:
         self.label1.set_text(self.textbox.get_text())
 
     def about(self, widget):
-        about = gtk.AboutDialog();
-        about.set_program_name("Paparazzi Airframe Editor")
-        about.set_version("0.1")
-        about.set_copyright("(c) GPL v2")
-        about.set_comments("Airframe Editor")
-        about.set_website("http://paparazzi.github.com/")
-        about.set_logo(gtk.gdk.pixbuf_new_from_file(path.join(paparazzi_home, "data/pictures/penguin_icon.png")))
-        about.run()
-        about.destroy()
-
-    def error(self):
-        err_msg = gtk.MessageDialog(None, gtk.DIALOG_DESTROY_WITH_PARENT,
-            gtk.MESSAGE_ERROR, gtk.BUTTONS_CLOSE,
-            "Error Loading XML" )
-        err_msg.run()
-        err_msg.destroy()
+        gui_dialogs.about(paparazzi_home)
 
     def fill_tree_from_airframe(self):
         
