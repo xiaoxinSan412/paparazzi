@@ -23,6 +23,7 @@ airframes_dir = path.join(home_dir, "conf/airframes/")
 # Structures
 PprzModule = namedtuple("PprzModule", "description defines configures")
 
+# List Of Stuff
 def get_list_of_files(directory, extension):
     mylist = glob.glob( path.join( directory, "*" + extension) )
     mylist.sort()
@@ -30,7 +31,6 @@ def get_list_of_files(directory, extension):
     for it in mylist:
         ret.append( it.replace(directory,"").replace(extension, "") )
     return ret
-    
 
 def get_list_of_modules():
     return get_list_of_files( modules_dir, ".xml" )
@@ -40,10 +40,12 @@ def get_list_of_firmwares():
 
 def get_list_of_subsystems(firmware):
     subsys_dir = path.join( firmwares_dir, "subsystems/" + firmware + "/" )
+    # \todo how about shared
     #subsys_dir = path.join( firmwares_dir, "subsystems/shared/" )
     return get_list_of_files( subsys_dir, ".makefile" )
 
 def get_list_of_servo_drivers():
+    # \todo where do we know this?
     return ["Ppm", "Asctec", "Scilab"]
 
 def get_module_information(module_name):

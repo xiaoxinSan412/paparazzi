@@ -30,6 +30,14 @@ standalone=None))
     ET.ElementTree(airframe).write('test.xml', pretty_print=True)
 
 
+
+
+
+
+
+
+
+
 if __name__ == '__main__':
     print(paparazzi.home_dir)
     organize_airframe_xml()

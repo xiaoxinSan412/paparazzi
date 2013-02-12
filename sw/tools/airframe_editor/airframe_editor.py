@@ -53,6 +53,7 @@ class AirframeEditor:
     def find_module_defines(self, widget):
         mod = paparazzi.get_module_information(self.combo.get_active_text())
         print(mod.description)
+        self.text_box.set_text(mod.description)
         for d in mod.defines:
             print("define: " + d[0])
         for c in mod.configures:
@@ -67,7 +68,7 @@ class AirframeEditor:
         self.textbox.set_text(widget.get_active_text())
 
     def textchanged(self, widget):
-        self.label1.set_text(self.textbox.get_text())
+        self.text_box.set_text(self.textbox.get_text())
 
     def about(self, widget):
         gui_dialogs.about(paparazzi_home)
@@ -147,9 +148,9 @@ class AirframeEditor:
         self.datagrid.append_column(self.unit_column)
 
         self.cell2 = gtk.CellRendererText()
-	self.cell2.Editable = True
+        self.cell2.Editable = True
         self.cell3 = gtk.CellRendererText()
-	self.cell3.Editable = True
+        self.cell3.Editable = True
 
         self.name_column.pack_start(self.cell2, True)
         self.name_column.add_attribute(self.cell2, 'text', 0)
@@ -158,8 +159,8 @@ class AirframeEditor:
         self.value_column.add_attribute(self.cell3, 'text', 1)
 
         self.datagrid.set_search_column(0)
-	self.name_column.set_sort_column_id(0)
-	self.datagrid.set_reorderable(True)
+        self.name_column.set_sort_column_id(0)
+        self.datagrid.set_reorderable(True)
 
 
     def destroy(self, widget, data=None):
@@ -227,12 +228,12 @@ class AirframeEditor:
         self.combo.connect("changed", self.combo_changed)
         self.toolbar.pack_start(self.combo)
 
-        self.label1 = gtk.Label("")
+        self.text_box = gtk.Label("")
 
         self.textbox = gtk.Entry()
         self.textbox.connect("changed",self.textchanged)
         
-        self.box1.pack_start(self.label1)
+        self.editor.pack_start(self.text_box)
         self.box1.pack_start(self.textbox)
 
         self.window.add(self.box1)
