@@ -82,7 +82,7 @@ class AirframeEditor:
 
     def process(self, widget):
         print(etree.tostring(self.airframe_xml, pretty_print=True))
-        self.organize_airframe_xml()
+        xml_parsing.organize_airframe_xml()
 
     def combo_changed(self, widget):
         print("Changed Combo")
@@ -105,6 +105,9 @@ class AirframeEditor:
 
     # Constructor Functions        
 
+    def select(self, widget):
+        print("Selected ",self.treeview.get_selection())
+
     def fill_tree_from_airframe(self):
         
         # create a TreeStore with one string column to use as the model
@@ -118,6 +121,7 @@ class AirframeEditor:
 
         # add self.tvcolumn to treeview
         self.treeview.append_column(self.tvcolumn)
+        self.treeview.connect("cursor-changed", self.select)
         self.cell = gtk.CellRendererText()
         self.tvcolumn.pack_start(self.cell, True)
         self.tvcolumn.add_attribute(self.cell, 'text', 0)
