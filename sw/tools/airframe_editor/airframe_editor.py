@@ -92,7 +92,7 @@ class AirframeEditor:
         self.text_box.set_text(self.textbox.get_text())
 
     def about(self, widget):
-        gui_dialogs.about(paparazzi_home)
+        gui_dialogs.about(paparazzi.home_dir)
 
     def open(self, widget):
         global airframe_file
