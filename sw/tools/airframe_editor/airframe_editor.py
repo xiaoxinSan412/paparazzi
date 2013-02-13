@@ -52,6 +52,12 @@ class AirframeEditor:
         list_of_subsystems = paparazzi.get_list_of_subsystems(self.firmwares_combo.get_active_text())
         self.update_combo(self.subsystems_combo,list_of_subsystems)
 
+    def find_boards(self, widget):
+        list_of_boards = paparazzi.get_list_of_boards()
+        self.update_combo(self.boards_combo,list_of_boards)
+
+
+
     def find_module_defines(self, widget):
         mod = paparazzi.get_module_information(self.modules_combo.get_active_text())
         print(mod.description)
@@ -207,10 +213,15 @@ class AirframeEditor:
 
         self.subsystems_combo = gtk.combo_box_entry_new_text()
 
+        self.boards_combo = gtk.combo_box_entry_new_text()
+        self.find_boards(self.boards_combo)
+        
+
         self.firmwarebar = gtk.HBox()
         self.firmwarebar.pack_start(self.btnFirmwares)
         self.firmwarebar.pack_start(self.btnSubSystem)
         self.firmwarebar.pack_start(self.firmwares_combo)
+        self.firmwarebar.pack_start(self.boards_combo)
         self.firmwarebar.pack_start(self.subsystems_combo)
 
         self.modules_combo = gtk.combo_box_entry_new_text()
