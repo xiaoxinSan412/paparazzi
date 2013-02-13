@@ -155,7 +155,6 @@ class AirframeEditor:
 
     def __init__(self):
         self.window = gtk.Window(gtk.WINDOW_TOPLEVEL)
-        self.window.set_size_request(1024,800)
         self.window.set_title("Paparazzi Airframe File Editor")
 
         self.my_vbox = gtk.VBox()
@@ -192,7 +191,7 @@ class AirframeEditor:
         self.toolbar.pack_start(self.btnAbout)
         self.toolbar.pack_start(self.btnExit)
 
-        self.my_vbox.pack_start(self.toolbar)
+        self.my_vbox.pack_start(self.toolbar, False)
 
 
 
@@ -208,14 +207,9 @@ class AirframeEditor:
         self.firmwarebar.pack_start(self.firmwares_combo)
         self.firmwarebar.pack_start(self.subsystems_combo)
 
-
-        self.my_vbox.pack_start(self.firmwarebar)
-
-
         self.modules_combo = gtk.combo_box_entry_new_text()
         self.find_modules(self.modules_combo)
         self.modules_combo.connect("changed", self.find_module_defines)
-
 
         #self.modulebar = gtk.HBox()
         self.firmwarebar.pack_start(self.btnModules)
@@ -223,6 +217,8 @@ class AirframeEditor:
         self.firmwarebar.pack_start(self.modules_combo)
 
         #self.my_vbox.pack_start(self.modulebar)
+
+        self.my_vbox.pack_start(self.firmwarebar, False)
 
 
 
@@ -232,14 +228,23 @@ class AirframeEditor:
         self.editor = gtk.HBox()
 
         self.fill_tree_from_airframe()
-        self.editor.pack_start(self.treeview)
+
+        self.scrolltree = gtk.ScrolledWindow()
+        self.scrolltree.set_policy(gtk.POLICY_AUTOMATIC, gtk.POLICY_AUTOMATIC)
+        self.scrolltree.add(self.treeview)
+        self.scrolltree.set_size_request(300,600)
+
+        self.editor.pack_start(self.scrolltree)
 	
         self.fill_datagrid_from_section()
+        self.datagrid.set_size_request(600,600)
         self.editor.pack_start(self.datagrid)
 
         self.my_vbox.pack_start(self.editor)
 
         self.text_box = gtk.Label("")
+        self.text_box.set_size_request(300,600)
+
         self.editor.pack_start(self.text_box)
 
         self.load_airframe_xml()
@@ -249,7 +254,7 @@ class AirframeEditor:
         self.textbox = gtk.Entry()
         self.textbox.connect("changed",self.textchanged)
         
-        self.my_vbox.pack_start(self.textbox)
+        self.my_vbox.pack_start(self.textbox,False)
 
         self.window.add(self.my_vbox)
         self.window.show_all()
