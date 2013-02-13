@@ -168,7 +168,7 @@ class AirframeEditor:
         self.btnOpen = gtk.Button("Open")
         self.btnOpen.connect("clicked", self.open)        
 
-        self.btnRun = gtk.Button("Run")
+        self.btnRun = gtk.Button("Reorganize XML")
         self.btnRun.connect("clicked", self.process)
 
         self.btnFirmwares = gtk.Button("Firmwares")
