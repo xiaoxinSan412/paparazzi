@@ -6,6 +6,8 @@ import glob
 
 from collections import namedtuple
 from os import path, getenv
+#from subprocess import call
+import commands
 
 import lxml.etree as ET
 
@@ -69,6 +71,13 @@ def get_module_information(module_name):
 
     return PprzModule(description=str_desc, defines=lst_def, configures=lst_conf)
 
+
+def search(string):
+    #return call(["grep", "-r", string , home_dir + "/sw/airborne/"])
+    #return system("grep -r " + string + " " + home_dir + "/sw/airborne/")
+    cmd = "grep -r " + string + " " + home_dir + "/sw/airborne/"
+    status, output = commands.getstatusoutput(cmd)
+    return output.replace(home_dir + "/sw/airborne/", "")
 
 
 if __name__ == '__main__':

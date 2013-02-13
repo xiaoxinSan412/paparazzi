@@ -74,8 +74,8 @@ class AirframeEditor:
         self.xml = xml_airframe.reorganize_airframe_xml(self.xml)
         xml_airframe.fill_tree(self.xml, self.treestore)
 
-    def textchanged(self, widget):
-        self.text_box.set_text(self.textbox.get_text())
+    #def textchanged(self, widget):
+    #    self.text_box.set_text(self.textbox.get_text())
 
     def about(self, widget):
         gui_dialogs.about(paparazzi.home_dir)
@@ -88,6 +88,11 @@ class AirframeEditor:
             return
         airframe_file = filename
         self.load_airframe_xml()
+
+    def search(self, widget):
+        ret = paparazzi.search(self.textbox.get_text())
+        self.text_box.set_text(ret)
+        print(ret)
 
     # Constructor Functions        
 
@@ -270,10 +275,18 @@ class AirframeEditor:
 
         ##### Bottom        
 
+        self.searchbar = gtk.HBox()
+
         self.textbox = gtk.Entry()
-        self.textbox.connect("changed",self.textchanged)
+        #self.textbox.connect("changed",self.textchanged)
         
-        self.my_vbox.pack_start(self.textbox,False)
+        self.btnSearch = gtk.Button("Search...")
+        self.btnSearch.connect("clicked", self.search)
+
+        self.searchbar.pack_start(self.textbox)
+        self.searchbar.pack_start(self.btnSearch)
+
+        self.my_vbox.pack_start(self.searchbar, False)
 
         self.window.add(self.my_vbox)
         self.window.show_all()
