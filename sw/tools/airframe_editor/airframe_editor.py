@@ -29,47 +29,42 @@ class AirframeEditor:
             gui_dialogs.error_loading_xml(e.__str__())
             raise e
 
-    def update_combo(self,list):
-        #self.combo.connect("changed", None)
-        self.combo.get_model().clear()
+    def update_combo(self,combo,list):
+        combo.set_sensitive(False)
+        combo.get_model().clear()
         for i in list:
-            self.combo.append_text(i)
-        self.combo.set_active(0)
-        #self.combo.connect("changed", self.combo_changed)
+            combo.append_text(i)
+        combo.set_active(0)
+        combo.set_sensitive(True)
 
     # CallBack Functions
 
     def find_firmwares(self, widget):
         list_of_firmwares = paparazzi.get_list_of_firmwares()
-        self.update_combo(list_of_firmwares)
+        self.update_combo(self.firmwares_combo, list_of_firmwares)
     
     def find_modules(self, widget):
         list_of_modules = paparazzi.get_list_of_modules()
-        self.update_combo(list_of_modules)
+        self.update_combo(self.modules_combo, list_of_modules)
 
     def find_subsystems(self, widget):
-        list_of_subsystems = paparazzi.get_list_of_subsystems(self.combo.get_active_text())
-        self.update_combo(list_of_subsystems)
+        list_of_subsystems = paparazzi.get_list_of_subsystems(self.firmwares_combo.get_active_text())
+        self.update_combo(self.subsystems_combo,list_of_subsystems)
 
     def find_module_defines(self, widget):
-        mod = paparazzi.get_module_information(self.combo.get_active_text())
+        mod = paparazzi.get_module_information(self.modules_combo.get_active_text())
         print(mod.description)
         self.text_box.set_text(mod.description)
-        for d in mod.defines:
-            print("define: " + d[0])
-        for c in mod.configures:
-            print("configure: " + c[0])
+        #for d in mod.defines:
+        #    print("define: " + d[0])
+        #for c in mod.configures:
+        #    print("configure: " + c[0])
         self.gridstore.clear()
         for d in mod.defines:
             self.gridstore.append( [ "define", d[0], d[1], d[2], d[3] ] )
 
     def process(self, widget):
-        # print(etree.tostring(self.airframe_xml, pretty_print=True))
         xml_airframe.reorganize_airframe_xml(self.xml)
-
-    def combo_changed(self, widget):
-        print("Changed Combo")
-        self.textbox.set_text(widget.get_active_text())
 
     def textchanged(self, widget):
         self.text_box.set_text(self.textbox.get_text())
@@ -194,14 +189,43 @@ class AirframeEditor:
         self.toolbar = gtk.HBox()
         self.toolbar.pack_start(self.btnOpen)
         self.toolbar.pack_start(self.btnRun)
-        self.toolbar.pack_start(self.btnFirmwares)
-        self.toolbar.pack_start(self.btnSubSystem)
-        self.toolbar.pack_start(self.btnModules)
-        self.toolbar.pack_start(self.btnModuleDefines)
         self.toolbar.pack_start(self.btnAbout)
         self.toolbar.pack_start(self.btnExit)
 
         self.my_vbox.pack_start(self.toolbar)
+
+
+
+        self.firmwares_combo = gtk.combo_box_entry_new_text()
+        self.find_firmwares(self.firmwares_combo)
+        self.firmwares_combo.connect("changed", self.find_subsystems)
+
+        self.subsystems_combo = gtk.combo_box_entry_new_text()
+
+        self.firmwarebar = gtk.HBox()
+        self.firmwarebar.pack_start(self.btnFirmwares)
+        self.firmwarebar.pack_start(self.btnSubSystem)
+        self.firmwarebar.pack_start(self.firmwares_combo)
+        self.firmwarebar.pack_start(self.subsystems_combo)
+
+
+        self.my_vbox.pack_start(self.firmwarebar)
+
+
+        self.modules_combo = gtk.combo_box_entry_new_text()
+        self.find_modules(self.modules_combo)
+        self.modules_combo.connect("changed", self.find_module_defines)
+
+
+        #self.modulebar = gtk.HBox()
+        self.firmwarebar.pack_start(self.btnModules)
+        self.firmwarebar.pack_start(self.btnModuleDefines)
+        self.firmwarebar.pack_start(self.modules_combo)
+
+        #self.my_vbox.pack_start(self.modulebar)
+
+
+
 
         ##### Middle
 
@@ -221,12 +245,6 @@ class AirframeEditor:
         self.load_airframe_xml()
 
         ##### Bottom        
-
-        self.combo = gtk.combo_box_entry_new_text()
-        self.combo.append_text("digital_cam")
-        self.combo.set_active(0)
-        self.combo.connect("changed", self.combo_changed)
-        self.toolbar.pack_start(self.combo)
 
         self.textbox = gtk.Entry()
         self.textbox.connect("changed",self.textchanged)
