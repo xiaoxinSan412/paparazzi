@@ -97,11 +97,12 @@ class AirframeEditor:
         (model, iter) = treeselection.get_selected()
         name_of_data = self.treestore.get_value(iter, 0)
         print("Selected ",name_of_data)
+        xml_airframe.defines(self.treestore.get_value(iter, 1), self.gridstore)
 
     def fill_tree_from_airframe(self):
         
         # create a TreeStore with one string column to use as the model
-        self.treestore = gtk.TreeStore(str)
+        self.treestore = gtk.TreeStore(str, object)
 
         # create the TreeView using treestore
         self.treeview = gtk.TreeView(self.treestore)
@@ -141,6 +142,7 @@ class AirframeEditor:
         self.name_cell.Editable = False
         self.value_cell = gtk.CellRendererText()
         self.value_cell.Editable = True
+        self.value_cell.set_property("editable", True)
         self.unit_cell = gtk.CellRendererText()
         self.unit_cell.Editable = False
         self.desc_cell = gtk.CellRendererText()

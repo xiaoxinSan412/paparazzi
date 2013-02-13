@@ -87,6 +87,18 @@ def load(airframe_file):
         return [e, my_xml]
 
 
+def fill_tree_children(block, tree, parent):
+    for elem in block:
+        ename = elem.get("name")
+        if ename == None:
+            ename = ""
+        # Only add sub-blocks if there are children
+        if len(elem):
+            if not isinstance(elem, ET._Comment):
+                piter = tree.append(parent, [ elem.tag.__str__() + " " + ename, elem ])
+                fill_tree_children(elem, tree, piter)
+
+
 def fill_tree(my_xml, tree):
     root = my_xml.getroot()
 
@@ -97,14 +109,18 @@ def fill_tree(my_xml, tree):
             if name == None:
                 name = ""
 
-            #print(block.tag.__str__() + " " + name)
-            piter = tree.append(None, [ block.tag.__str__() + " " + name ])
-            for elem in block:
-                ename = elem.get("name")
-                if ename == None:
-                    ename = ""
-                if not isinstance(elem, ET._Comment):
-                    tree.append(piter, [ elem.tag.__str__() + " " + ename ])
+            # print(block.tag.__str__() + " " + name)
+            piter = tree.append(None, [ block.tag.__str__() + " " + name, block ])
+            fill_tree_children(block, tree, piter)
+
+def defines( elem, grid):
+    grid.clear()
+    for e in elem.findall("./define"):
+        grid.append([ "define", e.get("name"), e.get("value"), e.get("unit"), e.get("description") ])
+    for e in elem.findall("./configure"):
+        grid.append([ "configure", e.get("name"), e.get("value"), e.get("unit"), e.get("description") ])
+
+
 
 
 if __name__ == '__main__':
