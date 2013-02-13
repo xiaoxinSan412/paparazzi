@@ -35,11 +35,14 @@ import lxml.etree as ET
 
 def indent(elem, level=0, more_sibs=False):
     i = "\n"
+    if (not more_sibs) & (level == 2):
+        i+= "\n"
     num_kids = len(elem)
     if ((level <= 1)):
         i += "\n"
     if level:
         i += (level-1) * '  '
+    #print(level, elem.tag, num_kids, more_sibs)
     if num_kids:
         if not elem.text or not elem.text.strip():
             elem.text = i + "  "

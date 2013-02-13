@@ -25,6 +25,7 @@ def reorganize_airframe_xml(airframe_xml):
     airframe.append(child1)
 
     find_and_add(airframe_xml, airframe, "firmware")
+    find_and_add_sections_with_name(airframe_xml,airframe,"AUTOPILOT")
 
     airframe.append(ET.Comment("+-+-+-+-+-+-+-  MODULES  -+-+-+-+-+-+-+"))
     find_and_add(airframe_xml, airframe, "modules")
@@ -33,21 +34,32 @@ def reorganize_airframe_xml(airframe_xml):
     find_and_add(airframe_xml, airframe, "servos")
     find_and_add(airframe_xml, airframe, "commands")
     find_and_add(airframe_xml, airframe, "rc_commands")
+    find_and_add_sections_with_name(airframe_xml,airframe,"AUTO1")
     find_and_add_sections_with_name(airframe_xml,airframe,"SERVO_MIXER_GAINS")
+    find_and_add_sections_with_name(airframe_xml,airframe,"MIXER")
+    find_and_add_sections_with_name(airframe_xml,airframe,"MIXING")
     find_and_add(airframe_xml, airframe, "command_laws")
     find_and_add_sections_with_name(airframe_xml,airframe,"FAILSAFE")
 
     airframe.append(ET.Comment("+-+-+-+-+-+-+-  SENSORS  -+-+-+-+-+-+-+"))
     find_and_add_sections_with_name(airframe_xml,airframe,"ADC")
-    find_and_add_sections_with_name(airframe_xml,airframe,"INS")
+    find_and_add_sections_with_name(airframe_xml,airframe,"IMU")
     find_and_add_sections_with_name(airframe_xml,airframe,"AHRS")
+    find_and_add_sections_with_name(airframe_xml,airframe,"INS")
     find_and_add_sections_with_name(airframe_xml,airframe,"XSENS")
 
     airframe.append(ET.Comment("+-+-+-+-+-+-+-   GAINS   -+-+-+-+-+-+-+"))
+    # Fixedwing
     find_and_add_sections_with_name(airframe_xml,airframe,"HORIZONTAL CONTROL")
     find_and_add_sections_with_name(airframe_xml,airframe,"VERTICAL CONTROL")
     find_and_add_sections_with_name(airframe_xml,airframe,"AGGRESSIVE")
+    # Rotorcraft
+    find_and_add_sections_with_name(airframe_xml,airframe,"STABILIZATION_RATE")
+    find_and_add_sections_with_name(airframe_xml,airframe,"STABILIZATION_ATTITUDE")
+    find_and_add_sections_with_name(airframe_xml,airframe,"GUIDANCE_V")
+    find_and_add_sections_with_name(airframe_xml,airframe,"GUIDANCE_H")
 
+    
 
     airframe.append(ET.Comment("+-+-+-+-+-+-+-   MISC    -+-+-+-+-+-+-+"))
 
@@ -100,5 +112,5 @@ if __name__ == '__main__':
         airframe_file = sys.argv[1]
         airframe = ET.parse(airframe_file)
     else:
-        airframe = ET.fromstring("<!DOCTYPE airframe SYSTEM \"airframe.dtd\"><!-- \n\tAirframe comment \n--> <airframe/>")
+        airframe = ET.parse("../../../conf/airframes/CDW/classix.xml")
     reorganize_airframe_xml(airframe)
