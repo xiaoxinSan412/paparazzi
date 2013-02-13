@@ -24,10 +24,11 @@ class AirframeEditor:
     def load_airframe_xml(self):
         global airframe_file
         self.tvcolumn.set_title(airframe_file.replace(paparazzi.airframes_dir,""))
-        [e, self.xml] = xml_airframe.load(airframe_file, self.treestore)
+        [e, self.xml] = xml_airframe.load(airframe_file)
         if (e):
             gui_dialogs.error_loading_xml(e.__str__())
             raise e
+        xml_airframe.fill_tree(self.xml, self.treestore)
 
     def update_combo(self,combo,list):
         combo.set_sensitive(False)
@@ -63,8 +64,9 @@ class AirframeEditor:
         for d in mod.defines:
             self.gridstore.append( [ "define", d[0], d[1], d[2], d[3] ] )
 
-    def process(self, widget):
-        xml_airframe.reorganize_airframe_xml(self.xml)
+    def reorganize_xml(self, widget):
+        self.xml = xml_airframe.reorganize_airframe_xml(self.xml)
+        xml_airframe.fill_tree(self.xml, self.treestore)
 
     def textchanged(self, widget):
         self.text_box.set_text(self.textbox.get_text())
@@ -84,7 +86,11 @@ class AirframeEditor:
     # Constructor Functions        
 
     def select(self, widget):
-        print("Selected ",self.treeview.get_selection())
+        #get data from highlighted selection 
+        treeselection = self.treeview.get_selection()
+        (model, iter) = treeselection.get_selected()
+        name_of_data = self.treestore.get_value(iter, 0)
+        print("Selected ",name_of_data)
 
     def fill_tree_from_airframe(self):
         
@@ -168,7 +174,7 @@ class AirframeEditor:
         self.btnOpen.connect("clicked", self.open)        
 
         self.btnRun = gtk.Button("Reorganize XML")
-        self.btnRun.connect("clicked", self.process)
+        self.btnRun.connect("clicked", self.reorganize_xml)
 
         self.btnFirmwares = gtk.Button("Firmwares")
         self.btnFirmwares.connect("clicked", self.find_firmwares)
