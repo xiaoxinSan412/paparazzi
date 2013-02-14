@@ -49,6 +49,7 @@ class AirframeEditor:
         self.update_combo(self.modules_combo, list_of_modules)
 
     def find_subsystems(self, widget):
+        self.textbox.set_text(self.firmwares_combo.get_active_text())
         list_of_subsystems = paparazzi.get_list_of_subsystems(self.firmwares_combo.get_active_text())
         self.update_combo(self.subsystems_combo,list_of_subsystems)
 
@@ -96,12 +97,22 @@ class AirframeEditor:
 
     # Constructor Functions        
 
+    def select_section(self, widget):
+        #get data from highlighted selection 
+        treeselection = self.datagrid.get_selection()
+        (model, iter) = treeselection.get_selected()
+        name_of_data = self.gridstore.get_value(iter, 1)
+        #print("Selected ",name_of_data)
+        self.textbox.set_text(name_of_data)
+        # xml_airframe.defines(self.treestore.get_value(iter, 1), self.gridstore)
+
     def select(self, widget):
         #get data from highlighted selection 
         treeselection = self.treeview.get_selection()
         (model, iter) = treeselection.get_selected()
         name_of_data = self.treestore.get_value(iter, 0)
-        print("Selected ",name_of_data)
+        #print("Selected ",name_of_data)
+        self.textbox.set_text(name_of_data)
         xml_airframe.defines(self.treestore.get_value(iter, 1), self.gridstore)
 
     def fill_tree_from_airframe(self):
@@ -140,6 +151,7 @@ class AirframeEditor:
         self.datagrid.append_column(self.value_column)
         self.datagrid.append_column(self.unit_column)
         self.datagrid.append_column(self.desc_column)
+        self.datagrid.connect("cursor-changed", self.select_section)
 
         self.type_cell = gtk.CellRendererText()
         self.type_cell.Editable = False
@@ -256,20 +268,25 @@ class AirframeEditor:
         self.scrolltree = gtk.ScrolledWindow()
         self.scrolltree.set_policy(gtk.POLICY_AUTOMATIC, gtk.POLICY_AUTOMATIC)
         self.scrolltree.add(self.treeview)
-        self.scrolltree.set_size_request(300,600)
+        self.scrolltree.set_size_request(400,600)
 
         self.editor.pack_start(self.scrolltree)
 	
         self.fill_datagrid_from_section()
-        self.datagrid.set_size_request(600,600)
+        self.datagrid.set_size_request(900,600)
         self.editor.pack_start(self.datagrid)
 
         self.my_vbox.pack_start(self.editor)
 
         self.text_box = gtk.Label("")
-        self.text_box.set_size_request(300,600)
+        self.text_box.set_size_request(600,100)
 
-        self.editor.pack_start(self.text_box)
+        self.scrolltext = gtk.ScrolledWindow()
+        self.scrolltext.set_policy(gtk.POLICY_AUTOMATIC, gtk.POLICY_AUTOMATIC)
+        self.scrolltext.add(self.text_box)
+        self.scrolltext.set_size_request(400,100)
+
+        self.my_vbox.pack_start(self.scrolltext)
 
         self.load_airframe_xml()
 
