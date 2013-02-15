@@ -132,6 +132,7 @@ class AirframeEditor:
         self.cell = gtk.CellRendererText()
         self.tvcolumn.pack_start(self.cell, True)
         self.tvcolumn.add_attribute(self.cell, 'text', 0)
+        self.treeview.set_reorderable(True)
         
     def fill_datagrid_from_section(self):
         

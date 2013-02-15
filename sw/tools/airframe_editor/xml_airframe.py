@@ -93,7 +93,7 @@ def fill_tree_children(block, tree, parent):
         if ename == None:
             ename = ""
         # Only add sub-blocks if there are children
-        if len(elem):
+        if len(elem) or ((block.tag != "section") & (block.tag != "load")):
             if not isinstance(elem, ET._Comment):
                 piter = tree.append(parent, [ elem.tag.__str__() + " " + ename, elem ])
                 fill_tree_children(elem, tree, piter)
@@ -103,6 +103,7 @@ def fill_tree(my_xml, tree):
     root = my_xml.getroot()
 
     tree.clear()
+    add_place = None
     for block in root:
         if not isinstance(block, ET._Comment):
             name = block.get("name")
@@ -110,8 +111,10 @@ def fill_tree(my_xml, tree):
                 name = ""
 
             # print(block.tag.__str__() + " " + name)
-            piter = tree.append(None, [ block.tag.__str__() + " " + name, block ])
+            piter = tree.append(add_place, [ block.tag.__str__() + " " + name, block ])
             fill_tree_children(block, tree, piter)
+        else:
+            add_place = tree.append(None, [ block.__str__().replace("<!--+-+-+-+-+-+-+-", "[").replace("-+-+-+-+-+-+-+-->","]"), block ])
 
 def defines( elem, grid):
     grid.clear()
