@@ -62,11 +62,12 @@ class AirframeEditor:
     def find_module_defines(self, widget):
         mod = paparazzi.get_module_information(self.modules_combo.get_active_text())
         print(mod.description)
-        self.text_box.set_text(mod.description)
-        #for d in mod.defines:
-        #    print("define: " + d[0])
-        #for c in mod.configures:
-        #    print("configure: " + c[0])
+        txt = mod.description + "\n"
+        for d in mod.defines:
+            txt += "define: " + d[0].__str__() + " = "  + d[1].__str__() + "; ["  + d[2].__str__() + "] // "  + d[3].__str__() + "\n"
+        for c in mod.configures:
+            txt += "configure: " + c[0].__str__() + " = "  + c[1].__str__() + "; ["  + c[2].__str__() + "] // "  + c[3].__str__() + "\n"
+        self.text_box.set_text(txt)
         self.gridstore.clear()
         for d in mod.defines:
             self.gridstore.append( [ "define", d[0], d[1], d[2], d[3] ] )
@@ -74,9 +75,6 @@ class AirframeEditor:
     def reorganize_xml(self, widget):
         self.xml = xml_airframe.reorganize_airframe_xml(self.xml)
         xml_airframe.fill_tree(self.xml, self.treestore)
-
-    #def textchanged(self, widget):
-    #    self.text_box.set_text(self.textbox.get_text())
 
     def about(self, widget):
         gui_dialogs.about(paparazzi.home_dir)
@@ -95,10 +93,10 @@ class AirframeEditor:
         self.text_box.set_text(ret)
         print(ret)
 
-    # Constructor Functions        
+    # Tree Callbacks
 
     def select_section(self, widget):
-        #get data from highlighted selection 
+        #get data from highlighted selection
         treeselection = self.datagrid.get_selection()
         (model, iter) = treeselection.get_selected()
         name_of_data = self.gridstore.get_value(iter, 1)
@@ -107,13 +105,15 @@ class AirframeEditor:
         # xml_airframe.defines(self.treestore.get_value(iter, 1), self.gridstore)
 
     def select(self, widget):
-        #get data from highlighted selection 
+        #get data from highlighted selection
         treeselection = self.treeview.get_selection()
         (model, iter) = treeselection.get_selected()
         name_of_data = self.treestore.get_value(iter, 0)
         #print("Selected ",name_of_data)
         self.textbox.set_text(name_of_data)
         xml_airframe.defines(self.treestore.get_value(iter, 1), self.gridstore)
+
+    # Constructor Functions
 
     def fill_tree_from_airframe(self):
         
@@ -190,6 +190,41 @@ class AirframeEditor:
 
         self.my_vbox = gtk.VBox()
 
+        # MenuBar
+        mb = gtk.MenuBar()
+
+        # File
+        filemenu = gtk.Menu()
+
+        # File Title
+        filem = gtk.MenuItem("File")
+        filem.set_submenu(filemenu)
+
+        openm = gtk.MenuItem("Open")
+        openm.connect("activate", self.open)
+        filemenu.append(openm)
+
+        exitm = gtk.MenuItem("Exit")
+        exitm.connect("activate", gtk.main_quit)
+        filemenu.append(exitm)
+
+        mb.append(filem)
+
+        # Help
+        helpmenu = gtk.Menu()
+
+        # Help Title
+        helpm = gtk.MenuItem("Help")
+        helpm.set_submenu(helpmenu)
+
+        aboutm = gtk.MenuItem("About")
+        aboutm.connect("activate", self.about)
+        helpmenu.append(aboutm)
+
+        mb.append(helpm)
+
+        self.my_vbox.pack_start(mb,False)
+
         ##### Buttons
         self.btnExit = gtk.Button("Exit")
         self.btnExit.connect("clicked", self.destroy)
@@ -207,7 +242,7 @@ class AirframeEditor:
         self.btnSubSystem = gtk.Button("SubSystems")
         self.btnSubSystem.connect("clicked", self.find_subsystems)
 
-        self.btnModules = gtk.Button("Modules")
+        self.btnModules = gtk.Button("Add Modules")
         self.btnModules.connect("clicked", self.find_modules)
 
         self.btnModuleDefines = gtk.Button("Define")
@@ -279,7 +314,7 @@ class AirframeEditor:
         self.my_vbox.pack_start(self.editor)
 
         self.text_box = gtk.Label("")
-        self.text_box.set_size_request(600,100)
+        self.text_box.set_size_request(600,1000)
 
         self.scrolltext = gtk.ScrolledWindow()
         self.scrolltext.set_policy(gtk.POLICY_AUTOMATIC, gtk.POLICY_AUTOMATIC)
@@ -296,7 +331,7 @@ class AirframeEditor:
 
         self.textbox = gtk.Entry()
         #self.textbox.connect("changed",self.textchanged)
-        
+
         self.btnSearch = gtk.Button("Search...")
         self.btnSearch.connect("clicked", self.search)
 
