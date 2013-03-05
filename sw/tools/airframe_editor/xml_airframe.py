@@ -21,6 +21,14 @@ def find_and_add_sections_with_name(source, target, find_name):
         xml_common.indent(t,1)
     target.extend(temp)
 
+def find_or_add_group(source, target, search):
+    groupname = "+-+-+-+-+-+-+- " + search + " -+-+-+-+-+-+-+"
+    target.append(ET.Comment(groupname))
+    for block in source.getroot():
+        if isinstance(block, ET._Comment):
+            if block.__str__() == "<!--"+groupname+"-->":
+                source.getroot().remove(block)
+
 def reorganize_airframe_xml(airframe_xml):
     some_file_like_object = StringIO.StringIO("<airframe/>")
     airframe_xml_tree = ET.parse(some_file_like_object)
@@ -31,18 +39,17 @@ def reorganize_airframe_xml(airframe_xml):
     else:
         airframe.set('name',airframe_xml.getroot().get('name'));
 
-    child1 = ET.Comment("+-+-+-+-+-+-+- FIRMWARES -+-+-+-+-+-+-+")
-    airframe.append(child1)
-
+    find_or_add_group(airframe_xml, airframe, "FIRMWARE")
     find_and_add(airframe_xml, airframe, "firmware")
     find_and_add_sections_with_name(airframe_xml,airframe,"AUTOPILOT")
 
-    airframe.append(ET.Comment("+-+-+-+-+-+-+-  MODULES  -+-+-+-+-+-+-+"))
+    find_or_add_group(airframe_xml, airframe, "MODULES")
     find_and_add(airframe_xml, airframe, "modules")
 
-    airframe.append(ET.Comment("+-+-+-+-+-+-+- ACTUATORS -+-+-+-+-+-+-+"))
+    find_or_add_group(airframe_xml, airframe, "ACTUATORS")
     find_and_add(airframe_xml, airframe, "servos")
     find_and_add(airframe_xml, airframe, "commands")
+    find_and_add(airframe_xml, airframe, "auto_commands")
     find_and_add(airframe_xml, airframe, "rc_commands")
     find_and_add_sections_with_name(airframe_xml,airframe,"AUTO1")
     find_and_add_sections_with_name(airframe_xml,airframe,"SERVO_MIXER_GAINS")
@@ -51,14 +58,15 @@ def reorganize_airframe_xml(airframe_xml):
     find_and_add(airframe_xml, airframe, "command_laws")
     find_and_add_sections_with_name(airframe_xml,airframe,"FAILSAFE")
 
-    airframe.append(ET.Comment("+-+-+-+-+-+-+-  SENSORS  -+-+-+-+-+-+-+"))
+    find_or_add_group(airframe_xml, airframe, "SENSORS")
     find_and_add_sections_with_name(airframe_xml,airframe,"ADC")
+    find_and_add_sections_with_name(airframe_xml,airframe,"INFRARED")
     find_and_add_sections_with_name(airframe_xml,airframe,"IMU")
     find_and_add_sections_with_name(airframe_xml,airframe,"AHRS")
     find_and_add_sections_with_name(airframe_xml,airframe,"INS")
     find_and_add_sections_with_name(airframe_xml,airframe,"XSENS")
 
-    airframe.append(ET.Comment("+-+-+-+-+-+-+-   GAINS   -+-+-+-+-+-+-+"))
+    find_or_add_group(airframe_xml, airframe, "GAINS")
     # Fixedwing
     find_and_add_sections_with_name(airframe_xml,airframe,"HORIZONTAL CONTROL")
     find_and_add_sections_with_name(airframe_xml,airframe,"VERTICAL CONTROL")
@@ -69,7 +77,7 @@ def reorganize_airframe_xml(airframe_xml):
     find_and_add_sections_with_name(airframe_xml,airframe,"GUIDANCE_V")
     find_and_add_sections_with_name(airframe_xml,airframe,"GUIDANCE_H")
 
-    airframe.append(ET.Comment("+-+-+-+-+-+-+-   MISC    -+-+-+-+-+-+-+"))
+    find_or_add_group(airframe_xml, airframe, "MISC")
 
     find_and_add(airframe_xml,airframe,"*")
 
