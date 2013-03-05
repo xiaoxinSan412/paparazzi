@@ -21,8 +21,10 @@ def find_and_add_sections_with_name(source, target, find_name):
         xml_common.indent(t,1)
     target.extend(temp)
 
+group_identification_string = " ************************* "
+
 def find_or_add_group(source, target, search):
-    groupname = "+-+-+-+-+-+-+- " + search + " -+-+-+-+-+-+-+"
+    groupname = group_identification_string + search + group_identification_string
     target.append(ET.Comment(groupname))
     for block in source.getroot():
         if isinstance(block, ET._Comment):
@@ -49,13 +51,14 @@ def reorganize_airframe_xml(airframe_xml):
     find_or_add_group(airframe_xml, airframe, "ACTUATORS")
     find_and_add(airframe_xml, airframe, "servos")
     find_and_add(airframe_xml, airframe, "commands")
-    find_and_add(airframe_xml, airframe, "auto_commands")
+    find_and_add(airframe_xml, airframe, "ap_only_commands")
     find_and_add(airframe_xml, airframe, "rc_commands")
     find_and_add_sections_with_name(airframe_xml,airframe,"AUTO1")
     find_and_add_sections_with_name(airframe_xml,airframe,"SERVO_MIXER_GAINS")
     find_and_add_sections_with_name(airframe_xml,airframe,"MIXER")
     find_and_add_sections_with_name(airframe_xml,airframe,"MIXING")
     find_and_add(airframe_xml, airframe, "command_laws")
+    find_and_add_sections_with_name(airframe_xml,airframe,"TRIM")
     find_and_add_sections_with_name(airframe_xml,airframe,"FAILSAFE")
 
     find_or_add_group(airframe_xml, airframe, "SENSORS")
@@ -153,7 +156,7 @@ def fill_tree(my_xml, tree):
             piter = tree.append(add_place, [ block.tag.__str__() + " " + name, block ])
             fill_tree_children(block, tree, piter)
         else:
-            add_place = tree.append(None, [ block.__str__().replace("<!--+-+-+-+-+-+-+-", "[").replace("-+-+-+-+-+-+-+-->","]"), block ])
+            add_place = tree.append(None, [ block.__str__().replace("<!--"+group_identification_string, "[").replace(group_identification_string+"-->","]"), block ])
 
 def defines( elem, grid):
     grid.clear()
