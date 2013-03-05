@@ -25,7 +25,11 @@ def reorganize_airframe_xml(airframe_xml):
     some_file_like_object = StringIO.StringIO("<airframe/>")
     airframe_xml_tree = ET.parse(some_file_like_object)
     airframe = airframe_xml_tree.getroot()
-    airframe.set('name',airframe_xml.getroot().get('name'));
+
+    if 'name' not in airframe_xml.getroot().attrib:
+        print("Airframe has no name!")
+    else:
+        airframe.set('name',airframe_xml.getroot().get('name'));
 
     child1 = ET.Comment("+-+-+-+-+-+-+- FIRMWARES -+-+-+-+-+-+-+")
     airframe.append(child1)
@@ -110,8 +114,9 @@ def load(airframe_file):
         my_xml = ET.parse(airframe_file)
         return [None, my_xml, get_airframe_header(airframe_file)]
     except (IOError, ET.XMLSyntaxError, ET.XMLSyntaxError) as e:
-        return [e, my_xml, get_airframe_header(airframe_file)]
-
+        print(" ERROR: Loading XML failed: ")
+        print(e)
+	quit()
 
 def fill_tree_children(block, tree, parent):
     for elem in block:
@@ -164,6 +169,7 @@ if __name__ == '__main__':
     else:
         airframe_file = "../../../conf/airframes/CDW/yapa_xsens.xml"
 
+    print(airframe_file)
     [e, airframe, hdr] = load(airframe_file)
     xml = reorganize_airframe_xml(airframe)
     ET.ElementTree(xml.getroot()).write(outputfile)
