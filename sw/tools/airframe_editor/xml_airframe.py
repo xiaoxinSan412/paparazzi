@@ -154,14 +154,17 @@ def defines( elem, grid):
 
 if __name__ == '__main__':
     import sys
+    outputfile = 'test.xml'
     if (len(sys.argv) > 1):
         airframe_file = sys.argv[1]
-        airframe = ET.parse(airframe_file)
+        if (len(sys.argv) > 2):
+            outputfile = sys.argv[2]
+            if (len(sys.argv) > 3):
+                outputfile = airframe_file
     else:
         airframe_file = "../../../conf/airframes/CDW/yapa_xsens.xml"
-        [e, airframe, hdr] = load(airframe_file)
-        print(hdr)
+
+    [e, airframe, hdr] = load(airframe_file)
     xml = reorganize_airframe_xml(airframe)
-    outputfile = 'test.xml'
     ET.ElementTree(xml.getroot()).write(outputfile)
     add_text_before_file(outputfile, hdr)

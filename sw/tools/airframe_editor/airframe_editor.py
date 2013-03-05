@@ -24,7 +24,7 @@ class AirframeEditor:
     def load_airframe_xml(self):
         global airframe_file
         self.tvcolumn.set_title(airframe_file.replace(paparazzi.airframes_dir,""))
-        [e, self.xml] = xml_airframe.load(airframe_file)
+        [e, self.xml, self.xml_header] = xml_airframe.load(airframe_file)
         if (e):
             gui_dialogs.error_loading_xml(e.__str__())
             raise e
