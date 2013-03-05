@@ -81,18 +81,36 @@ def reorganize_airframe_xml(airframe_xml):
 
 
 def get_airframe_header(airframe_file):
-   """Returns a string of the text"""
-   f = open(airframe_file, 'r')
-   string = str(f.read())
-   f.close()
-   return string
+    try:
+        with open(airframe_file) as inputFileHandle:
+            fullfile = inputFileHandle.read()
+            pos = fullfile.find("<airframe")
+            if pos > 0:
+                return fullfile[0:pos]
+            else:
+                return ""
+    except IOError:
+        return ""
+
+def add_text_before_file(text_file, new_string):
+    try:
+        fullfile = ""
+        with open(text_file) as inputFileHandle:
+            fullfile = inputFileHandle.read()
+            inputFileHandle.close()
+        with open(text_file, 'w') as outputFileHandle:
+            outputFileHandle.write(new_string)
+            outputFileHandle.write(fullfile)
+            outputFileHandle.close();
+    except IOError:
+        return
 
 def load(airframe_file):
     try:
         my_xml = ET.parse(airframe_file)
-        return [None, my_xml]
+        return [None, my_xml, get_airframe_header(airframe_file)]
     except (IOError, ET.XMLSyntaxError, ET.XMLSyntaxError) as e:
-        return [e, my_xml]
+        return [e, my_xml, get_airframe_header(airframe_file)]
 
 
 def fill_tree_children(block, tree, parent):
@@ -140,6 +158,10 @@ if __name__ == '__main__':
         airframe_file = sys.argv[1]
         airframe = ET.parse(airframe_file)
     else:
-        [e, airframe] = load("../../../conf/airframes/CDW/classix.xml")
+        airframe_file = "../../../conf/airframes/CDW/yapa_xsens.xml"
+        [e, airframe, hdr] = load(airframe_file)
+        print(hdr)
     xml = reorganize_airframe_xml(airframe)
-    ET.ElementTree(xml.getroot()).write('test.xml')
+    outputfile = 'test.xml'
+    ET.ElementTree(xml.getroot()).write(outputfile)
+    add_text_before_file(outputfile, hdr)
