@@ -22,10 +22,10 @@ def find_and_add_sections_with_name(source, target, find_name):
     target.extend(temp)
 
 def reorganize_airframe_xml(airframe_xml):
-    some_file_like_object = StringIO.StringIO("<!DOCTYPE airframe SYSTEM \"airframe.dtd\">\n\n<!-- \n\tAirframe comment \n-->\n\n<airframe/>")
+    some_file_like_object = StringIO.StringIO("<airframe/>")
     airframe_xml_tree = ET.parse(some_file_like_object)
     airframe = airframe_xml_tree.getroot()
-    
+    airframe.set('name',airframe_xml.getroot().get('name'));
 
     child1 = ET.Comment("+-+-+-+-+-+-+- FIRMWARES -+-+-+-+-+-+-+")
     airframe.append(child1)
@@ -78,6 +78,14 @@ def reorganize_airframe_xml(airframe_xml):
     #print(etree.tostring(airframe))
     #ET.ElementTree(airframe_xml_tree).write('test.xml')
     return airframe_xml_tree
+
+
+def get_airframe_header(airframe_file):
+   """Returns a string of the text"""
+   f = open(airframe_file, 'r')
+   string = str(f.read())
+   f.close()
+   return string
 
 def load(airframe_file):
     try:
